@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Bus, RefreshCw, MapPin, AlertCircle, Clock, Wifi, WifiOff, Navigation } from 'lucide-react';
+import { Bus, RefreshCw, MapPin, AlertCircle, Clock, Wifi, WifiOff } from 'lucide-react';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -47,7 +47,7 @@ export default function App() {
       filterSeq: (eta) => eta.seq > 5
     },
     {
-      id: "E481F7170B1F6FC3", // 精確的大欖隧道 (B1) ID
+      id: "E481F7170B1F6FC3",
       name: "大欖隧道 (B1)",
       desc: "往峻巒方向",
       routes: ['268M'],
@@ -61,7 +61,6 @@ export default function App() {
       const currentTime = new Date();
       setNow(currentTime);
 
-      // 小巴備用模擬引擎邏輯：當第一班車「已開出」超過 1 分鐘，自動推入新班次，使畫面無限循環
       setGmbSchedules(prev => {
         const updated = { ...prev };
         let changed = false;
@@ -84,7 +83,6 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // 獲取實時九巴及小巴數據
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -94,8 +92,6 @@ export default function App() {
 
     // 1. 嘗試使用官方 ID 直接與小巴 API 連線
     try {
-      // 峻巒總站 Stop ID: 20015509 (共同站牌)
-      // 620 路線 ID: 2008785, 624 路線 ID: 2010635
       const gmbUrl620 = `https://rt.data.gov.hk/v1/transport/minibus/eta/20015509/2008785/1`;
       const gmbUrl624 = `https://rt.data.gov.hk/v1/transport/minibus/eta/20015509/2010635/1`;
 
@@ -124,12 +120,11 @@ export default function App() {
 
       setIsGmbRealtime(gmbSuccess);
     } catch (e) {
-      // 如果瀏覽器限制 CORS，則啟動仿真引擎，保證 UI 永遠漂亮有數據
       console.warn("瀏覽器 CORS 安全限制，已啟動小巴仿真高精倒數引擎。");
       setIsGmbRealtime(false);
     }
 
-    // 2. 獲取九巴實時數據 (不受 CORS 限制，秒速讀取)
+    // 2. 獲取九巴實時數據
     try {
       const stopPromises = LOCATIONS.map(loc => 
         fetch(`https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/${loc.id}`)
@@ -158,7 +153,6 @@ export default function App() {
 
         const routesList = [];
 
-        // 整理九巴路線
         loc.routes.forEach(routeNum => {
           const validEtas = allEtas.filter(eta => 
             eta.route === routeNum && eta.eta && loc.filterSeq(eta)
@@ -185,7 +179,7 @@ export default function App() {
                 route: routeNum,
                 dest: displayDest,
                 isSimulation: false,
-                etas: destEtas.slice(0, 4).map(e => ({
+                etas: destEtas.slice(0, 2).map(e => ({
                   time: new Date(e.eta),
                   rmk: e.rmk_tc !== "原定班次" ? e.rmk_tc : null
                 }))
@@ -196,7 +190,6 @@ export default function App() {
 
         // 注入小巴 (僅限於峻巒總站卡片)
         if (loc.name.includes("峻巒")) {
-          // 620 路線 (往錦上路站)
           const etas620 = isGmbRealtime && gmbRealtimeData['620'] && gmbRealtimeData['620'].length > 0
             ? gmbRealtimeData['620']
             : gmbSchedules['620'].map(time => ({ time, rmk: null }));
@@ -206,10 +199,9 @@ export default function App() {
             route: '620',
             dest: '錦上路站',
             isSimulation: !isGmbRealtime,
-            etas: etas620.slice(0, 4)
+            etas: etas620.slice(0, 2)
           });
 
-          // 624 路線 (往元朗泰衡街)
           const etas624 = isGmbRealtime && gmbRealtimeData['624'] && gmbRealtimeData['624'].length > 0
             ? gmbRealtimeData['624']
             : gmbSchedules['624'].map(time => ({ time, rmk: null }));
@@ -219,11 +211,10 @@ export default function App() {
             route: '624',
             dest: '元朗(泰衡街)',
             isSimulation: !isGmbRealtime,
-            etas: etas624.slice(0, 4)
+            etas: etas624.slice(0, 2)
           });
         }
 
-        // 排序：九巴在前，小巴在後，並按照路線號碼升序排列
         routesList.sort((a, b) => {
           if (a.company !== b.company) return a.company === 'KMB' ? -1 : 1;
           return a.route.localeCompare(b.route, undefined, { numeric: true });
@@ -259,7 +250,8 @@ export default function App() {
   };
 
   const getMinimalEta = (diffMins) => {
-    if (diffMins < 0) return '已開出';
+    if (diffMins < -1) return '已開出';
+    if (diffMins === -1) return '已開出';
     if (diffMins === 0) return '即將'; 
     return `${diffMins}`; 
   };
@@ -332,36 +324,30 @@ export default function App() {
                 <span className="text-xs text-gray-500 bg-gray-200/60 px-2 py-0.5 rounded font-medium">{loc.desc}</span>
               </div>
 
-              {/* 智能排版：時間格網格系統 */}
-              <div className="divide-y divide-gray-100">
+              {/* 【已還原】 智能排版：直向 2 列路線，橫向 4 列路線 */}
+              <div className="grid grid-cols-2 landscape:grid-cols-4 md:grid-cols-4 gap-2 p-2">
                 {loc.routesData.map((route, rIdx) => {
                   
-                  // 補足 4 個空位，確保 CSS Grid 排版一致
-                  const displayEtas = [];
-                  for (let i = 0; i < 4; i++) {
-                    displayEtas.push(route.etas[i] || null);
-                  }
+                  // 每個路線卡片內只顯示 2 個班次，符合網格大小
+                  const displayEtas = [route.etas[0] || null, route.etas[1] || null];
                   
-                  // 紅綠配色：九巴(紅) 與小巴(綠)
                   const isGMB = route.company === 'GMB';
                   const badgeColor = isGMB ? 'bg-emerald-600' : 'bg-red-600';
 
                   return (
-                    <div key={rIdx} className="p-3 md:p-4 hover:bg-gray-50/50 transition-colors flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 relative overflow-hidden">
+                    <div key={rIdx} className="border border-gray-100 rounded-lg bg-gray-50/60 p-2 flex flex-col gap-2 relative overflow-hidden">
                       
-                      {/* 加大路線牌與方向字體 */}
-                      <div className="flex items-center gap-2 sm:w-48 shrink-0">
-                        <span className={`${badgeColor} text-white font-black px-2 py-1 rounded text-sm md:text-base leading-none shrink-0 shadow-sm`}>
+                      <div className="flex items-center gap-1.5 w-full">
+                        <span className={`${badgeColor} text-white font-black px-2 py-0.5 rounded text-sm md:text-base leading-none shrink-0 shadow-sm`}>
                           {route.route}
                         </span>
-                        <Navigation className="w-4 h-4 text-gray-400 shrink-0" />
                         <span className="font-bold text-gray-800 text-sm md:text-base truncate tracking-wide">
-                          {route.dest}
+                          往 {route.dest}
                         </span>
                       </div>
 
-                      {/* 時間顯示網格：直向顯示 2 格，橫向顯示 4 格 */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full">
+                      {/* 內部時間網格：直向/橫向皆為 2 格 */}
+                      <div className="grid grid-cols-2 gap-1.5 w-full">
                         {displayEtas.map((eta, eIdx) => {
                           
                           if (!eta) {
@@ -375,7 +361,6 @@ export default function App() {
                           const diffMins = getEtaMinutes(eta.time);
                           const etaText = getMinimalEta(diffMins);
                           
-                          // 三色提示
                           const isRed = diffMins >= 0 && diffMins <= 5;
                           const isYellow = diffMins > 5 && diffMins <= 10;
 
@@ -395,7 +380,7 @@ export default function App() {
 
                           const isText = isNaN(etaText);
                           
-                          // 終極大字體類別：純數字模式直接放大填滿整格
+                          // 極限大字體
                           const sizeClass = showExactTime
                             ? (isText ? 'text-xl md:text-2xl' : 'text-3xl md:text-4xl')
                             : (isText ? 'text-3xl md:text-4xl' : 'text-5xl md:text-6xl lg:text-7xl');
@@ -419,22 +404,20 @@ export default function App() {
                                 </span>
                               )}
 
-                              {/* 實時/模擬角標 */}
                               {isGMB && (
                                 <div className="absolute top-0 left-0 p-1 z-10">
                                   {route.isSimulation ? (
                                     <div className="flex items-center gap-0.5 text-[8px] font-bold text-slate-500 bg-white/80 px-1 rounded border border-slate-200 shadow-sm" title="此數據為仿真班次時間">
-                                      <WifiOff className="w-2.5 h-2.5" /> 模擬
+                                      <WifiOff className="w-2 h-2" /> 模擬
                                     </div>
                                   ) : (
                                     <div className="flex items-center gap-0.5 text-[8px] font-bold text-emerald-600 bg-emerald-50 px-1 rounded border border-emerald-200 shadow-sm animate-pulse" title="實時 GPS 到站數據">
-                                      <Wifi className="w-2.5 h-2.5" /> 實時
+                                      <Wifi className="w-2 h-2" /> 實時
                                     </div>
                                   )}
                                 </div>
                               )}
 
-                              {/* 備註角標 */}
                               {eta.rmk && eta.rmk !== '高仿真模擬' && (
                                 <div className={`absolute top-0 right-0 text-[9px] font-bold px-1.5 py-[3px] rounded-bl-lg border-b border-l shadow-sm truncate max-w-[90%] z-10
                                   ${isRed ? 'bg-red-100 text-red-600 border-red-200' : 
