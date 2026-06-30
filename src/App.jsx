@@ -198,36 +198,37 @@ export default function App() {
               
               <div className="bg-gray-100 border-b border-gray-200 px-2 py-1.5 flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-red-500" />
-                  <h2 className="font-bold text-gray-800 text-sm">{loc.name}</h2>
+                  <MapPin className="w-4 h-4 text-red-500" />
+                  <h2 className="font-bold text-gray-800 text-sm md:text-base">{loc.name}</h2>
                 </div>
-                <span className="text-[10px] text-gray-500 bg-gray-200/60 px-1.5 py-0.5 rounded">{loc.desc}</span>
+                <span className="text-[10px] md:text-xs text-gray-500 bg-gray-200/60 px-1.5 py-0.5 rounded">{loc.desc}</span>
               </div>
 
-              <div className="grid grid-cols-2 landscape:grid-cols-4 md:grid-cols-4 gap-1.5 p-1.5">
+              <div className="grid grid-cols-2 landscape:grid-cols-4 md:grid-cols-4 gap-2 p-2">
                 {loc.routesData.map((route, rIdx) => {
                   
                   const displayEtas = [route.etas[0] || null, route.etas[1] || null];
 
                   return (
-                    <div key={rIdx} className="border border-gray-100 rounded-md bg-gray-50/50 p-1.5 flex flex-col gap-1.5 relative overflow-hidden">
+                    <div key={rIdx} className="border border-gray-100 rounded-lg bg-gray-50/60 p-2 flex flex-col gap-2 relative overflow-hidden">
                       
-                      <div className="flex items-center gap-1.5 w-full">
-                        <span className="bg-red-600 text-white font-bold px-2 py-0.5 rounded text-xs md:text-sm leading-none shrink-0 shadow-sm">
+                      {/* 【字體放大核心】路線號碼與目的地 */}
+                      <div className="flex items-center gap-2 w-full">
+                        <span className="bg-red-600 text-white font-black px-2 py-0.5 rounded text-sm md:text-base leading-tight shrink-0 shadow-sm">
                           {route.route}
                         </span>
-                        <span className="font-bold text-gray-700 text-xs md:text-sm truncate">
+                        <span className="font-bold text-gray-800 text-sm md:text-base truncate tracking-wide">
                           往 {route.dest}
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-1.5 w-full">
+                      <div className="grid grid-cols-2 gap-2 w-full">
                         {displayEtas.map((eta, eIdx) => {
                           
                           if (!eta) {
                             return (
-                              <div key={`empty-${eIdx}`} className="flex flex-col items-center justify-center rounded border border-dashed border-gray-200 bg-white/50 aspect-[4/3]">
-                                <span className="text-gray-300 text-[10px]">-</span>
+                              <div key={`empty-${eIdx}`} className="flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-200 bg-white/50 aspect-[4/3]">
+                                <span className="text-gray-300 text-xs">-</span>
                               </div>
                             );
                           }
@@ -254,17 +255,14 @@ export default function App() {
 
                           const isText = isNaN(etaText);
                           
-                          // 【撐滿方格的極限字體設定】
-                          // 根據模式 (是否顯示確實時間) 以及 (是否為中文字) 決定字體大小
                           const sizeClass = showExactTime
-                            ? (isText ? 'text-3xl sm:text-4xl' : 'text-5xl sm:text-6xl')
-                            : (isText ? 'text-4xl sm:text-5xl' : 'text-6xl sm:text-7xl lg:text-[4.5rem]');
+                            ? (isText ? 'text-xl md:text-2xl' : 'text-4xl md:text-5xl')
+                            : (isText ? 'text-3xl md:text-4xl' : 'text-6xl md:text-7xl lg:text-[5rem]');
 
                           return (
                             <div 
                               key={eIdx}
-                              // 【更正比例】：aspect-[4/3] 讓方格更立體，提供更多高度給大數字
-                              className={`relative flex flex-col items-center justify-center rounded border ${boxStyle} overflow-hidden aspect-[4/3]`}
+                              className={`relative flex flex-col items-center justify-center rounded-lg border ${boxStyle} overflow-hidden aspect-[4/3]`}
                             >
                               <span className={`
                                 ${sizeClass} 
@@ -275,13 +273,13 @@ export default function App() {
                               </span>
                               
                               {showExactTime && (
-                                <span className="absolute bottom-1.5 text-[10px] sm:text-xs opacity-75 leading-none font-medium bg-white/80 px-1.5 py-0.5 rounded shadow-sm">
+                                <span className="absolute bottom-1.5 text-xs opacity-75 leading-none font-medium bg-white/80 px-1.5 py-0.5 rounded shadow-sm">
                                   {formatTime(eta.time)}
                                 </span>
                               )}
 
                               {eta.rmk && (
-                                <div className={`absolute top-0 right-0 text-[7px] md:text-[8px] font-bold px-1.5 py-[3px] rounded-bl border-b border-l shadow-sm truncate max-w-[90%] z-10
+                                <div className={`absolute top-0 right-0 text-[8px] md:text-[9px] font-bold px-1.5 py-[3px] rounded-bl-lg border-b border-l shadow-sm truncate max-w-[90%] z-10
                                   ${isRed ? 'bg-red-100 text-red-600 border-red-200' : 
                                     isYellow ? 'bg-amber-100 text-amber-700 border-amber-200' : 
                                     'bg-gray-100 text-gray-600 border-gray-200'}`}>
@@ -301,7 +299,7 @@ export default function App() {
           ))}
         </div>
         
-        <div className="text-center text-[10px] text-gray-400 pt-2 pb-4">
+        <div className="text-center text-xs text-gray-400 pt-2 pb-4">
           數據由資料一線通提供 • 每 30 秒自動更新
         </div>
       </main>
