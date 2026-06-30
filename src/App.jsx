@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Bus, RefreshCw, MapPin, AlertCircle } from 'lucide-react';
+import { Bus, RefreshCw, MapPin, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [locationsData, setLocationsData] = useState([]);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [error, setError] = useState(null);
+  const [showExactTime, setShowExactTime] = useState(false); // 新增：控制是否顯示確實時間的狀態
 
   const LOCATIONS = [
     {
@@ -161,6 +162,14 @@ export default function App() {
             <span className="text-[10px] md:text-xs text-red-200">
               更新: {lastUpdated ? formatTime(lastUpdated) : '--:--'}
             </span>
+            {/* 新增：切換顯示確實時間的按鈕 */}
+            <button 
+              onClick={() => setShowExactTime(!showExactTime)}
+              className="p-1.5 rounded-full hover:bg-red-700 transition-colors bg-red-700/50"
+              title="切換顯示確實時間"
+            >
+              {showExactTime ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+            </button>
             <button 
               onClick={fetchData} 
               disabled={loading}
@@ -208,10 +217,11 @@ export default function App() {
                     <div key={rIdx} className="border border-gray-100 rounded-md bg-gray-50/50 p-1.5 flex flex-col gap-1.5 relative overflow-hidden">
                       
                       <div className="flex items-center gap-1.5 w-full">
-                        <span className="bg-red-600 text-white font-bold px-1.5 py-0.5 rounded text-[11px] leading-none shrink-0 shadow-sm">
+                        {/* 放大路線號碼與目的地字體 */}
+                        <span className="bg-red-600 text-white font-bold px-2 py-0.5 rounded text-xs md:text-sm leading-none shrink-0 shadow-sm">
                           {route.route}
                         </span>
-                        <span className="font-bold text-gray-700 text-[11px] truncate">
+                        <span className="font-bold text-gray-700 text-xs md:text-sm truncate">
                           往 {route.dest}
                         </span>
                       </div>
@@ -220,8 +230,9 @@ export default function App() {
                         {displayEtas.map((eta, eIdx) => {
                           
                           if (!eta) {
+                            // 略微增加高度以適應大字體 (修復了此處的註解錯誤)
                             return (
-                              <div key={`empty-${eIdx}`} className="flex flex-col items-center justify-center py-1 rounded border border-dashed border-gray-200 bg-white/50 h-[42px]">
+                              <div key={`empty-${eIdx}`} className="flex flex-col items-center justify-center py-1 rounded border border-dashed border-gray-200 bg-white/50 h-[48px]">
                                 <span className="text-gray-300 text-[10px]">-</span>
                               </div>
                             );
@@ -250,17 +261,22 @@ export default function App() {
                           return (
                             <div 
                               key={eIdx}
-                              className={`relative flex flex-col items-center justify-center py-1 rounded border h-[42px] ${boxStyle}`}
+                              className={`relative flex flex-col items-center justify-center py-1 rounded border h-[48px] ${boxStyle}`}
                             >
-                              <span className={`text-base font-black tracking-tight leading-none ${textStyle}`}>
+                              {/* 根據 Toggle 狀態決定字體大小 */}
+                              <span className={`${showExactTime ? 'text-base' : 'text-xl md:text-2xl'} font-black tracking-tight leading-none ${textStyle}`}>
                                 {etaText}
                               </span>
-                              <span className="text-[9px] opacity-60 leading-none mt-1 transform scale-90">
-                                {formatTime(eta.time)}
-                              </span>
+                              
+                              {/* 根據 Toggle 狀態決定是否顯示確實時間 */}
+                              {showExactTime && (
+                                <span className="text-[9px] opacity-60 leading-none mt-1 transform scale-90">
+                                  {formatTime(eta.time)}
+                                </span>
+                              )}
 
                               {eta.rmk && (
-                                <div className={`absolute -top-1.5 -right-1 text-[7px] font-bold px-1 py-0.5 rounded border shadow-sm truncate max-w-[90%]
+                                <div className={`absolute -top-1.5 -right-1 text-[7px] font-bold px-1 py-0.5 rounded border shadow-sm truncate max-w-[90%] z-10
                                   ${isRed ? 'bg-red-100 text-red-600 border-red-200' : 
                                     isYellow ? 'bg-amber-100 text-amber-700 border-amber-200' : 
                                     'bg-gray-100 text-gray-600 border-gray-200'}`}>
