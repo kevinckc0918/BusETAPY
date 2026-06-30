@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Bus, RefreshCw, MapPin, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Bus, RefreshCw, MapPin, AlertCircle, Clock } from 'lucide-react';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -188,10 +188,10 @@ export default function App() {
             </span>
             <button 
               onClick={() => setShowExactTime(!showExactTime)}
-              className="p-1.5 rounded-full hover:bg-red-700 transition-colors bg-red-700/50"
+              className={`p-1.5 rounded-full transition-colors ${showExactTime ? 'bg-red-700 text-white' : 'hover:bg-red-700 bg-red-700/50 text-red-100'}`}
               title="切換顯示確實時間"
             >
-              {showExactTime ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              <Clock className="w-4 h-4" />
             </button>
             <button 
               onClick={fetchData} 
@@ -286,7 +286,6 @@ export default function App() {
                             textStyle = 'text-amber-600';
                           }
 
-                          // 針對 "即將" 或 "已開出" 這種中文字，稍微調小一點，避免爆框
                           const isText = isNaN(etaText);
                           
                           return (
@@ -294,7 +293,6 @@ export default function App() {
                               key={eIdx}
                               className={`relative flex flex-col items-center justify-center rounded border h-full ${boxStyle} overflow-hidden`}
                             >
-                              {/* 動態調整字體大小，盡量填滿 */}
                               <span className={`
                                 ${showExactTime 
                                   ? (isText ? 'text-lg' : 'text-xl') 
