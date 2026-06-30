@@ -6,9 +6,9 @@ export default function App() {
   const [locationsData, setLocationsData] = useState([]);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [error, setError] = useState(null);
+  // 預設關閉確實時間，顯示極限大字
   const [showExactTime, setShowExactTime] = useState(false);
 
-  // 回歸最穩定、最快速的精確 ID 抓取法
   const LOCATIONS = [
     {
       id: "67D38E584B919815",
@@ -32,7 +32,6 @@ export default function App() {
       filterSeq: (seq) => seq > 5
     },
     {
-      // 直接使用你提供的精確大欖隧道 (B1) ID
       id: "E481F7170B1F6FC3",
       name: "大欖隧道 (B1)",
       desc: "往峻巒方向",
@@ -45,14 +44,12 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      // 1. 獲取四個地點的特定站牌數據
       const stopPromises = LOCATIONS.map(loc => 
         fetch(`https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/${loc.id}`)
           .then(res => res.ok ? res.json() : { data: [] })
           .catch(() => ({ data: [] }))
       );
 
-      // 2. 【268M 專屬對策】直接獲取 268M 往荃灣(1)全線數據，用來補足峻巒總站的起點坑位
       const route268MPromise = fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route-eta/268M/1`)
           .then(res => res.ok ? res.json() : { data: [] })
           .catch(() => ({ data: [] }));
@@ -68,7 +65,6 @@ export default function App() {
       const processedData = LOCATIONS.map((loc, idx) => {
         let allEtas = stopResults[idx].data || [];
         
-        // 如果是峻巒總站，合併 268M 起點數據
         if (loc.name.includes("峻巒")) {
             allEtas = [...allEtas, ...parkYoho268MEtas];
         }
@@ -88,7 +84,6 @@ export default function App() {
               destEtas.sort((a, b) => new Date(a.eta) - new Date(b.eta));
 
               let displayDest = dest;
-              // 為了排版美觀，動態縮短目的地名稱
               if (loc.name.includes('形點') || loc.name.includes('大欖隧道')) {
                 displayDest = '峻巒(總站)'; 
               } else if (displayDest.includes('荃灣西')) {
@@ -109,7 +104,6 @@ export default function App() {
           }
         });
 
-        // 確保路線按照 68, 68F, 268M 的順序排列
         routesList.sort((a, b) => a.route.localeCompare(b.route, undefined, { numeric: true }));
 
         return {
@@ -156,7 +150,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 text-gray-800 font-sans pb-4">
-      {/* 紅底白字 Header */}
       <header className="bg-red-600 text-white p-2 md:p-3 shadow-md sticky top-0 z-10">
         <div className="max-w-5xl mx-auto w-full flex justify-between items-center px-1">
           <div className="flex items-center gap-1.5">
@@ -212,7 +205,6 @@ export default function App() {
                 <span className="text-[10px] text-gray-500 bg-gray-200/60 px-1.5 py-0.5 rounded">{loc.desc}</span>
               </div>
 
-              {/* 高密度網格 */}
               <div className="grid grid-cols-2 landscape:grid-cols-4 md:grid-cols-4 gap-1.5 p-1.5">
                 {loc.routesData.map((route, rIdx) => {
                   
@@ -230,12 +222,13 @@ export default function App() {
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-1.5 w-full h-[52px]">
+                      {/* 時間方格容器：移除固定高度，讓內容撐開 */}
+                      <div className="grid grid-cols-2 gap-1.5 w-full">
                         {displayEtas.map((eta, eIdx) => {
                           
                           if (!eta) {
                             return (
-                              <div key={`empty-${eIdx}`} className="flex flex-col items-center justify-center rounded border border-dashed border-gray-200 bg-white/50 h-full">
+                              <div key={`empty-${eIdx}`} className="flex flex-col items-center justify-center rounded border border-dashed border-gray-200 bg-white/50 py-4">
                                 <span className="text-gray-300 text-[10px]">-</span>
                               </div>
                             );
@@ -266,27 +259,31 @@ export default function App() {
                           return (
                             <div 
                               key={eIdx}
-                              className={`relative flex flex-col items-center justify-center rounded border h-full ${boxStyle} overflow-hidden`}
+                              // 使用 aspect-video (16:9) 確保方格不會過度扁平，並提供足夠空間給大字
+                              className={`relative flex flex-col items-center justify-center rounded border ${boxStyle} overflow-hidden aspect-[3/2]`}
                             >
-                              {/* 撐滿方格的極限大字體 */}
+                              {/* 動態調整字體大小：
+                                  - 不顯示確實時間時，純數字推到 4xl/5xl，中文字推到 2xl/3xl
+                                  - 顯示確實時間時，縮小一號以容納下方時間
+                              */}
                               <span className={`
                                 ${showExactTime 
-                                  ? (isText ? 'text-lg' : 'text-xl') 
-                                  : (isText ? 'text-2xl' : 'text-3xl md:text-4xl')} 
+                                  ? (isText ? 'text-xl' : 'text-3xl md:text-4xl') 
+                                  : (isText ? 'text-2xl md:text-3xl' : 'text-4xl md:text-5xl')} 
                                 font-black tracking-tighter leading-none ${textStyle}
-                                flex items-center justify-center
-                              `} style={{ height: showExactTime ? 'auto' : '100%' }}>
+                                flex items-center justify-center w-full h-full
+                              `}>
                                 {etaText}
                               </span>
                               
                               {showExactTime && (
-                                <span className="text-[10px] opacity-60 leading-none mt-1">
+                                <span className="absolute bottom-1 text-[10px] opacity-70 leading-none font-medium bg-white/60 px-1 rounded">
                                   {formatTime(eta.time)}
                                 </span>
                               )}
 
                               {eta.rmk && (
-                                <div className={`absolute -top-1.5 -right-1 text-[7px] font-bold px-1 py-0.5 rounded border shadow-sm truncate max-w-[90%] z-10
+                                <div className={`absolute top-0 right-0 text-[8px] font-bold px-1 py-[2px] rounded-bl border-b border-l shadow-sm truncate max-w-[90%] z-10
                                   ${isRed ? 'bg-red-100 text-red-600 border-red-200' : 
                                     isYellow ? 'bg-amber-100 text-amber-700 border-amber-200' : 
                                     'bg-gray-100 text-gray-600 border-gray-200'}`}>
