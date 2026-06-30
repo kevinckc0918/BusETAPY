@@ -9,8 +9,27 @@ export default function App() {
   const [showExactTime, setShowExactTime] = useState(false);
   const [now, setNow] = useState(new Date());
   
-  // 預設為暗黑主題 (Dark Mode)
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  // 預設為暗黑主題，並嘗試從 localStorage 讀取已儲存的設定
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    try {
+      const savedTheme = localStorage.getItem('kmb_theme');
+      if (savedTheme !== null) {
+        return JSON.parse(savedTheme);
+      }
+    } catch (e) {
+      console.warn("無法讀取主題設定", e);
+    }
+    return true; // 如果沒有記錄，預設為黑色主題
+  });
+
+  // 當主題改變時，自動儲存到 localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('kmb_theme', JSON.stringify(isDarkMode));
+    } catch (e) {
+      console.warn("無法儲存主題設定", e);
+    }
+  }, [isDarkMode]);
 
   // 主題配色字典 (Theme Dictionary)
   const theme = {
