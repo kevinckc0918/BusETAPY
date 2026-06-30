@@ -6,7 +6,6 @@ export default function App() {
   const [locationsData, setLocationsData] = useState([]);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [error, setError] = useState(null);
-  // 預設關閉確實時間，顯示極限大字
   const [showExactTime, setShowExactTime] = useState(false);
 
   const LOCATIONS = [
@@ -15,28 +14,28 @@ export default function App() {
       name: "峻巒 (總站)",
       desc: "往市區方向",
       routes: ['68', '68F', '268M'],
-      filterSeq: (seq) => seq <= 5 
+      filterSeq: (eta) => eta.seq <= 5 && !eta.dest_tc.includes('峻巒')
     },
     {
       id: "0C943B7308FF4DCC",
       name: "形點 II",
       desc: "往峻巒方向",
       routes: ['68', '68F'],
-      filterSeq: (seq) => seq > 5
+      filterSeq: (eta) => eta.seq > 5
     },
     {
       id: "7917E395940F86AF",
       name: "形點 I",
       desc: "往峻巒方向",
       routes: ['68', '68F'],
-      filterSeq: (seq) => seq > 5
+      filterSeq: (eta) => eta.seq > 5
     },
     {
       id: "E481F7170B1F6FC3",
       name: "大欖隧道 (B1)",
       desc: "往峻巒方向",
       routes: ['268M'],
-      filterSeq: (seq) => true
+      filterSeq: (eta) => true
     }
   ];
 
@@ -73,7 +72,7 @@ export default function App() {
 
         loc.routes.forEach(routeNum => {
           const validEtas = allEtas.filter(eta => 
-            eta.route === routeNum && eta.eta && loc.filterSeq(eta.seq)
+            eta.route === routeNum && eta.eta && loc.filterSeq(eta)
           );
 
           if (validEtas.length > 0) {
@@ -222,13 +221,12 @@ export default function App() {
                         </span>
                       </div>
 
-                      {/* 時間方格容器：移除固定高度，讓內容撐開 */}
                       <div className="grid grid-cols-2 gap-1.5 w-full">
                         {displayEtas.map((eta, eIdx) => {
                           
                           if (!eta) {
                             return (
-                              <div key={`empty-${eIdx}`} className="flex flex-col items-center justify-center rounded border border-dashed border-gray-200 bg-white/50 py-4">
+                              <div key={`empty-${eIdx}`} className="flex flex-col items-center justify-center rounded border border-dashed border-gray-200 bg-white/50 aspect-[4/3]">
                                 <span className="text-gray-300 text-[10px]">-</span>
                               </div>
                             );
@@ -256,20 +254,20 @@ export default function App() {
 
                           const isText = isNaN(etaText);
                           
+                          // 【撐滿方格的極限字體設定】
+                          // 根據模式 (是否顯示確實時間) 以及 (是否為中文字) 決定字體大小
+                          const sizeClass = showExactTime
+                            ? (isText ? 'text-3xl sm:text-4xl' : 'text-5xl sm:text-6xl')
+                            : (isText ? 'text-4xl sm:text-5xl' : 'text-6xl sm:text-7xl lg:text-[4.5rem]');
+
                           return (
                             <div 
                               key={eIdx}
-                              // 使用 aspect-video (16:9) 確保方格不會過度扁平，並提供足夠空間給大字
-                              className={`relative flex flex-col items-center justify-center rounded border ${boxStyle} overflow-hidden aspect-[3/2]`}
+                              // 【更正比例】：aspect-[4/3] 讓方格更立體，提供更多高度給大數字
+                              className={`relative flex flex-col items-center justify-center rounded border ${boxStyle} overflow-hidden aspect-[4/3]`}
                             >
-                              {/* 動態調整字體大小：
-                                  - 不顯示確實時間時，純數字推到 4xl/5xl，中文字推到 2xl/3xl
-                                  - 顯示確實時間時，縮小一號以容納下方時間
-                              */}
                               <span className={`
-                                ${showExactTime 
-                                  ? (isText ? 'text-xl' : 'text-3xl md:text-4xl') 
-                                  : (isText ? 'text-2xl md:text-3xl' : 'text-4xl md:text-5xl')} 
+                                ${sizeClass} 
                                 font-black tracking-tighter leading-none ${textStyle}
                                 flex items-center justify-center w-full h-full
                               `}>
@@ -277,13 +275,13 @@ export default function App() {
                               </span>
                               
                               {showExactTime && (
-                                <span className="absolute bottom-1 text-[10px] opacity-70 leading-none font-medium bg-white/60 px-1 rounded">
+                                <span className="absolute bottom-1.5 text-[10px] sm:text-xs opacity-75 leading-none font-medium bg-white/80 px-1.5 py-0.5 rounded shadow-sm">
                                   {formatTime(eta.time)}
                                 </span>
                               )}
 
                               {eta.rmk && (
-                                <div className={`absolute top-0 right-0 text-[8px] font-bold px-1 py-[2px] rounded-bl border-b border-l shadow-sm truncate max-w-[90%] z-10
+                                <div className={`absolute top-0 right-0 text-[7px] md:text-[8px] font-bold px-1.5 py-[3px] rounded-bl border-b border-l shadow-sm truncate max-w-[90%] z-10
                                   ${isRed ? 'bg-red-100 text-red-600 border-red-200' : 
                                     isYellow ? 'bg-amber-100 text-amber-700 border-amber-200' : 
                                     'bg-gray-100 text-gray-600 border-gray-200'}`}>
