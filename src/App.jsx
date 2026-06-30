@@ -176,19 +176,21 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 text-gray-800 font-sans pb-4">
+      {/* Header 保持紅色底，文字設定為純白 */}
       <header className="bg-red-600 text-white p-2 md:p-3 shadow-md sticky top-0 z-10">
         <div className="max-w-5xl mx-auto w-full flex justify-between items-center px-1">
-          <div className="flex items-center gap-1.5">
-            <Bus className="w-5 h-5" />
-            <h1 className="text-base md:text-lg font-bold tracking-wide">峻巒巴士到站</h1>
+          <div className="flex items-center gap-2">
+            <Bus className="w-5 h-5 text-white" />
+            <h1 className="text-base md:text-lg font-bold tracking-wide text-white">峻巒巴士到站</h1>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] md:text-xs text-red-200">
+            {/* 時間文字使用帶有一點透明度的白色，以區分重要性 */}
+            <span className="text-[10px] md:text-xs text-white/90">
               更新: {lastUpdated ? formatTime(lastUpdated) : '--:--'}
             </span>
             <button 
               onClick={() => setShowExactTime(!showExactTime)}
-              className={`p-1.5 rounded-full transition-colors ${showExactTime ? 'bg-red-700 text-white' : 'hover:bg-red-700 bg-red-700/50 text-red-100'}`}
+              className={`p-1.5 rounded-full transition-colors ${showExactTime ? 'bg-red-800 text-white' : 'hover:bg-red-700 bg-red-700/60 text-white'}`}
               title="切換顯示確實時間"
             >
               <Clock className="w-4 h-4" />
@@ -196,7 +198,7 @@ export default function App() {
             <button 
               onClick={fetchData} 
               disabled={loading || !stopsMap}
-              className="p-1.5 rounded-full hover:bg-red-700 transition-colors bg-red-700/50"
+              className="p-1.5 rounded-full hover:bg-red-700 transition-colors bg-red-700/60 text-white"
             >
               <RefreshCw className={`w-4 h-4 ${(loading || !stopsMap) ? 'animate-spin' : ''}`} />
             </button>
