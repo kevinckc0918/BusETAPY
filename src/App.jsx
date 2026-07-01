@@ -1,4 +1,3 @@
-```react
 import React, { useState, useEffect, useCallback } from 'react';
 import { Bus, RefreshCw, MapPin, AlertCircle, Clock, Navigation, Moon, Sun, MonitorSmartphone } from 'lucide-react';
 
@@ -482,5 +481,3 @@ export default function App() {
     </div>
   );
 }
-
-```
