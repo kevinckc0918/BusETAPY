@@ -6,8 +6,9 @@ import { Bus, RefreshCw, Moon, Sun, MonitorSmartphone, Image as ImageIcon } from
 // ==========================================
 const USER_PHOTOS = [
   "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?q=80&w=1920&auto=format&fit=crop", // 風景 1
-  "https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1920&auto=format&fit=crop", // 風景 2
-  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1920&auto=format&fit=crop"  // 風景 3
+  "https://images.unsplash.com/photo-1506744626753-eda8151a15c1?q=80&w=1920&auto=format&fit=crop", // 風景 2
+  "https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1920&auto=format&fit=crop", // 風景 3
+  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1920&auto=format&fit=crop"  // 風景 4
 ];
 
 export default function App() {
@@ -72,7 +73,6 @@ export default function App() {
     rowOdd: isDarkMode ? 'bg-zinc-800' : 'bg-[#fce4ec]',
     routeNum: isDarkMode ? 'text-zinc-100' : 'text-gray-900',
     routeDest: isDarkMode ? 'text-zinc-300' : 'text-gray-700',
-    routeLoc: isDarkMode ? 'text-zinc-500' : 'text-gray-400',
     // 預設顏色：>= 11 分鐘時的顏色 (黑/白)
     etaPrimaryDefault: isDarkMode ? 'text-zinc-100' : 'text-black', 
     etaSecondary: isDarkMode ? 'text-zinc-400' : 'text-gray-600',
@@ -205,7 +205,7 @@ export default function App() {
   const getEtaMinutes = (etaDate) => Math.floor((etaDate - now) / 60000);
 
   // 共用的單一路線橫向斑馬紋渲染組件
-  const renderRow = (route, rIdx, locName, locDesc) => {
+  const renderRow = (route, rIdx) => {
     const isEven = rIdx % 2 === 0;
     const rowBg = isEven ? theme.rowEven : theme.rowOdd;
     const primaryMins = route.etas[0] ? getEtaMinutes(route.etas[0].time) : null;
@@ -226,7 +226,7 @@ export default function App() {
     return (
       <div key={rIdx} className={`flex justify-between items-center px-5 py-3 md:py-4 transition-colors ${rowBg}`}>
         
-        {/* 左側資訊區：強制靠左對齊 (items-start text-left) */}
+        {/* 左側資訊區：強制靠左對齊，並移除了多餘的車站名稱 */}
         <div className="flex flex-col items-start justify-center text-left">
           <span className={`text-5xl lg:text-6xl font-black tracking-tight leading-none ${theme.routeNum}`}>
             {route.route}
@@ -234,15 +234,9 @@ export default function App() {
           <span className={`text-sm lg:text-base font-bold mt-1.5 ${theme.routeDest}`}>
             往 {route.dest}
           </span>
-          {/* 在相架模式下隱藏車站小字，保持畫面簡潔 */}
-          {!isStandMode && (
-             <span className={`text-[10px] mt-0.5 ${theme.routeLoc}`}>
-               {locName} ({locDesc})
-             </span>
-          )}
         </div>
         
-        {/* 右側時間區：靠右對齊 (items-end text-right) */}
+        {/* 右側時間區：靠右對齊 */}
         <div className="flex flex-col items-end justify-center h-full min-w-[80px] text-right">
           {primaryMins === null ? (
             <span className={`text-3xl font-black ${theme.etaMissed}`}>-</span>
@@ -312,8 +306,8 @@ export default function App() {
              </span>
           </div>
 
-          {/* 表頭： 路線 | 分鐘 */}
-          <div className={`flex justify-between px-5 py-2 text-sm font-bold border-b shrink-0 ${theme.colHeader}`}>
+          {/* 表頭： 路線 | 分鐘 (已加大字體) */}
+          <div className={`flex justify-between px-5 py-2 text-base font-bold border-b shrink-0 ${theme.colHeader}`}>
             <span>路線</span>
             <span>分鐘</span>
           </div>
@@ -321,7 +315,7 @@ export default function App() {
           {/* 斑馬紋列表 */}
           <div className="flex-1 overflow-y-auto flex flex-col">
             {parkYohoData?.routesData.map((route, rIdx) => 
-               renderRow(route, rIdx, parkYohoData.name, parkYohoData.desc)
+               renderRow(route, rIdx)
             )}
             {/* 底部補白 */}
             <div className="flex-1 min-h-[20px]"></div>
@@ -361,20 +355,20 @@ export default function App() {
             
             {/* 車站紅色 Pill 標籤 */}
             <div className="px-5 pt-4 pb-3">
-              <span className={`inline-block px-5 py-1.5 rounded-full font-bold text-sm shadow-sm ${theme.pillBg}`}>
+              <span className={`inline-block px-5 py-1.5 rounded-full font-bold text-base shadow-sm ${theme.pillBg}`}>
                 {loc.name}
               </span>
             </div>
 
-            {/* 表頭 */}
-            <div className={`flex justify-between px-5 py-2 text-xs font-bold border-b ${theme.colHeader}`}>
+            {/* 表頭 (已加大字體 text-base) */}
+            <div className={`flex justify-between px-5 py-2 text-base font-bold border-b ${theme.colHeader}`}>
               <span>路線</span>
               <span>分鐘</span>
             </div>
             
             {/* 路線行 */}
             <div className="flex flex-col">
-              {loc.routesData.map((route, rIdx) => renderRow(route, rIdx, loc.name, loc.desc))}
+              {loc.routesData.map((route, rIdx) => renderRow(route, rIdx))}
             </div>
           </div>
         ))}
