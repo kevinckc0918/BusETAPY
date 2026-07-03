@@ -7,9 +7,8 @@ import { Bus, RefreshCw, Moon, Sun, MonitorSmartphone, Image as ImageIcon } from
 // ==========================================
 const USER_PHOTOS = [
   "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?q=80&w=1920&auto=format&fit=crop", // 風景 1
-  "https://images.unsplash.com/photo-1506744626753-eda8151a15c1?q=80&w=1920&auto=format&fit=crop", // 風景 2
-  "https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1920&auto=format&fit=crop", // 風景 3
-  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1920&auto=format&fit=crop"  // 風景 4
+  "https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1920&auto=format&fit=crop", // 風景 2
+  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1920&auto=format&fit=crop"  // 風景 3
 ];
 
 export default function App() {
@@ -271,9 +270,9 @@ export default function App() {
                 ${i === photoIndex ? 'opacity-100' : 'opacity-0'}`}
             />
           ))}
-          <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-md text-white/80 px-3 py-1.5 rounded-full text-xs font-bold z-10">
+          {/* <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-md text-white/80 px-3 py-1.5 rounded-full text-xs font-bold z-10">
             <ImageIcon className="w-3.5 h-3.5" /> 峻巒數碼相架
-          </div>
+          </div> */}
         </div>
 
         {/* 右側 40%：斑馬紋交通資訊面板 */}
@@ -375,8 +374,9 @@ export default function App() {
           </button>
         </div>
         
+        {/* 統一固定的標題 */}
         <h1 className="text-lg md:text-xl font-bold tracking-widest text-white text-center flex-1">
-          {isStandMode ? "峻巒數碼相架" : "香港巴士時間"}
+          峻巒巴士時間
         </h1>
         
         <button onClick={fetchData} className="p-1.5 text-white/80 hover:text-white transition-colors">
