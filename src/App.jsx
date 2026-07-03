@@ -74,8 +74,8 @@ export default function App() {
     routeNum: isDarkMode ? 'text-zinc-100' : 'text-gray-900',
     routeDest: isDarkMode ? 'text-zinc-300' : 'text-gray-700',
     routeLoc: isDarkMode ? 'text-zinc-500' : 'text-gray-400',
-    etaPrimary: isDarkMode ? 'text-blue-400' : 'text-[#1e3a8a]', 
-    etaSecondary: isDarkMode ? 'text-blue-500/70' : 'text-[#1e3a8a]/70',
+    etaPrimary: isDarkMode ? 'text-zinc-100' : 'text-black', // 由藍色改為黑色 (暗黑模式下為白色)
+    etaSecondary: isDarkMode ? 'text-zinc-400' : 'text-gray-600', // 由淺藍色改為深灰色 (暗黑模式下為淺灰色)
     etaMissed: isDarkMode ? 'text-zinc-500' : 'text-gray-400',
     tabActive: isDarkMode ? 'bg-white text-red-900' : 'bg-white text-[#e3342f]',
     tabInactive: isDarkMode ? 'border border-white/50 text-white' : 'border border-white/50 text-white hover:bg-white/10'
@@ -216,7 +216,7 @@ export default function App() {
     return (
       <div key={rIdx} className={`flex justify-between items-center px-5 py-3 md:py-4 transition-colors ${rowBg}`}>
         
-        {/* 左側資訊區：強制靠左對齊 (items-start text-left) */}
+        {/* 左側資訊區：強制靠左對齊 */}
         <div className="flex flex-col items-start justify-center text-left">
           <span className={`text-5xl lg:text-6xl font-black tracking-tight leading-none ${theme.routeNum}`}>
             {route.route}
@@ -232,7 +232,7 @@ export default function App() {
           )}
         </div>
         
-        {/* 右側時間區：靠右對齊 (items-end text-right) */}
+        {/* 右側時間區：靠右對齊 */}
         <div className="flex flex-col items-end justify-center h-full min-w-[80px] text-right">
           {primaryMins === null ? (
             <span className={`text-3xl font-black ${theme.etaMissed}`}>-</span>
@@ -289,7 +289,7 @@ export default function App() {
         {/* 右側 40%：斑馬紋交通資訊面板 */}
         <div className={`w-[40%] h-full flex flex-col z-10 transition-colors shadow-2xl ${theme.appBg}`}>
           
-          {/* 右側頂部小標題 (取代原本紅色 pill) */}
+          {/* 右側頂部小標題 */}
           <div className="px-5 pt-5 pb-3 border-b border-gray-500/20 shrink-0 flex items-center justify-between">
              <div className="flex items-center gap-2">
                 <Bus className={`w-5 h-5 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
