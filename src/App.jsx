@@ -289,7 +289,7 @@ export default function App() {
         {/* 右側 40%：斑馬紋交通資訊面板 */}
         <div className={`w-[40%] h-full flex flex-col z-10 transition-colors shadow-2xl ${theme.appBg}`}>
           
-          {/* 頂部標籤與時鐘 */}
+          {/* 右側頂部小標題 (取代原本紅色 pill) */}
           <div className="px-5 pt-5 pb-3 border-b border-gray-500/20 shrink-0 flex items-center justify-between">
              <div className="flex items-center gap-2">
                 <Bus className={`w-5 h-5 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
@@ -392,7 +392,7 @@ export default function App() {
         
         {/* 全局統一標題 */}
         <h1 className="text-xl font-bold tracking-widest text-white text-center flex-1">
-          峻巒巴士時間
+          峻巒巴士到站預報
         </h1>
         
         <button onClick={fetchData} className="p-1.5 text-white/80 hover:text-white transition-colors">
