@@ -3,7 +3,6 @@ import { Bus, RefreshCw, Moon, Sun, MonitorSmartphone, Image as ImageIcon } from
 
 // ==========================================
 // 🖼️ 用家自訂相簿區 (USER PHOTOS)
-// 在這裡放入你的 JPG 圖片網址或本地路徑
 // ==========================================
 const USER_PHOTOS = [
   "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?q=80&w=1920&auto=format&fit=crop", // 風景 1
@@ -74,8 +73,9 @@ export default function App() {
     routeNum: isDarkMode ? 'text-zinc-100' : 'text-gray-900',
     routeDest: isDarkMode ? 'text-zinc-300' : 'text-gray-700',
     routeLoc: isDarkMode ? 'text-zinc-500' : 'text-gray-400',
-    etaPrimary: isDarkMode ? 'text-zinc-100' : 'text-black', // 由藍色改為黑色 (暗黑模式下為白色)
-    etaSecondary: isDarkMode ? 'text-zinc-400' : 'text-gray-600', // 由淺藍色改為深灰色 (暗黑模式下為淺灰色)
+    // 預設顏色：>= 11 分鐘時的顏色 (黑/白)
+    etaPrimaryDefault: isDarkMode ? 'text-zinc-100' : 'text-black', 
+    etaSecondary: isDarkMode ? 'text-zinc-400' : 'text-gray-600',
     etaMissed: isDarkMode ? 'text-zinc-500' : 'text-gray-400',
     tabActive: isDarkMode ? 'bg-white text-red-900' : 'bg-white text-[#e3342f]',
     tabInactive: isDarkMode ? 'border border-white/50 text-white' : 'border border-white/50 text-white hover:bg-white/10'
@@ -213,10 +213,20 @@ export default function App() {
     const isMissed = primaryMins !== null && primaryMins < 0;
     const isImminent = primaryMins === 0;
 
+    // 💡 智能顏色提示邏輯
+    let dynamicEtaColor = theme.etaPrimaryDefault;
+    if (primaryMins !== null && primaryMins >= 0) {
+      if (primaryMins <= 5) {
+        dynamicEtaColor = isDarkMode ? 'text-red-400' : 'text-red-600'; // 0-5分鐘：紅色
+      } else if (primaryMins <= 10) {
+        dynamicEtaColor = isDarkMode ? 'text-orange-400' : 'text-orange-500'; // 6-10分鐘：橙色
+      }
+    }
+
     return (
       <div key={rIdx} className={`flex justify-between items-center px-5 py-3 md:py-4 transition-colors ${rowBg}`}>
         
-        {/* 左側資訊區：強制靠左對齊 */}
+        {/* 左側資訊區：強制靠左對齊 (items-start text-left) */}
         <div className="flex flex-col items-start justify-center text-left">
           <span className={`text-5xl lg:text-6xl font-black tracking-tight leading-none ${theme.routeNum}`}>
             {route.route}
@@ -232,14 +242,14 @@ export default function App() {
           )}
         </div>
         
-        {/* 右側時間區：靠右對齊 */}
+        {/* 右側時間區：靠右對齊 (items-end text-right) */}
         <div className="flex flex-col items-end justify-center h-full min-w-[80px] text-right">
           {primaryMins === null ? (
             <span className={`text-3xl font-black ${theme.etaMissed}`}>-</span>
           ) : isMissed ? (
             <div className="flex flex-col items-end">
               <span className={`text-3xl lg:text-4xl font-black tracking-wide ${theme.etaMissed}`}>
-                走咗啦
+                已開出
               </span>
               {secondaryMins !== null && secondaryMins >= 0 && (
                 <span className={`text-lg lg:text-xl font-bold mt-1 ${theme.etaSecondary}`}>
@@ -249,7 +259,7 @@ export default function App() {
             </div>
           ) : (
             <div className="flex flex-col items-end leading-none">
-              <span className={`text-5xl lg:text-6xl font-black ${theme.etaPrimary}`}>
+              <span className={`text-5xl lg:text-6xl font-black transition-colors duration-300 ${dynamicEtaColor}`}>
                 {isImminent ? '即將' : primaryMins}
               </span>
               <div className={`text-lg lg:text-xl font-bold mt-2 flex items-center gap-1 ${theme.etaSecondary}`}>
