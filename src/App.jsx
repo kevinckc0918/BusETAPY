@@ -73,7 +73,6 @@ export default function App() {
     rowOdd: isDarkMode ? 'bg-zinc-800' : 'bg-[#fce4ec]',
     routeNum: isDarkMode ? 'text-zinc-100' : 'text-gray-900',
     routeDest: isDarkMode ? 'text-zinc-300' : 'text-gray-700',
-    // 預設顏色：>= 11 分鐘時的顏色 (黑/白)
     etaPrimaryDefault: isDarkMode ? 'text-zinc-100' : 'text-black', 
     etaSecondary: isDarkMode ? 'text-zinc-400' : 'text-gray-600',
     etaMissed: isDarkMode ? 'text-zinc-500' : 'text-gray-400',
@@ -253,7 +252,8 @@ export default function App() {
             </div>
           ) : (
             <div className="flex flex-col items-end leading-none">
-              <span className={`text-5xl lg:text-6xl font-black transition-colors duration-300 ${dynamicEtaColor}`}>
+              {/* 智能字體縮放：是純數字用 5xl/6xl，是「即將」則同已開出一樣用 3xl/4xl */}
+              <span className={`${isImminent ? 'text-3xl lg:text-4xl tracking-wide' : 'text-5xl lg:text-6xl'} font-black transition-colors duration-300 ${dynamicEtaColor}`}>
                 {isImminent ? '即將' : primaryMins}
               </span>
               <div className={`text-lg lg:text-xl font-bold mt-2 flex items-center gap-1 ${theme.etaSecondary}`}>
