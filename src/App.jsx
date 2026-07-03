@@ -6,7 +6,6 @@ import { Bus, RefreshCw, Moon, Sun, MonitorSmartphone, Image as ImageIcon } from
 // ==========================================
 const USER_PHOTOS = [
   "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?q=80&w=1920&auto=format&fit=crop", // 風景 1
-  "https://images.unsplash.com/photo-1506744626753-eda8151a15c1?q=80&w=1920&auto=format&fit=crop", // 風景 2
   "https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1920&auto=format&fit=crop", // 風景 3
   "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1920&auto=format&fit=crop"  // 風景 4
 ];
