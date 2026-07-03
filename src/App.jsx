@@ -214,31 +214,45 @@ export default function App() {
     const isImminent = primaryMins === 0;
 
     return (
-      <div key={rIdx} className={`flex justify-between items-center px-4 md:px-5 py-3 transition-colors ${rowBg}`}>
-        <div className="flex flex-col">
-          <span className={`text-4xl lg:text-5xl font-black tracking-tight ${theme.routeNum}`}>{route.route}</span>
-          <span className={`text-sm lg:text-base font-bold mt-1 ${theme.routeDest}`}>往 {route.dest}</span>
-          {/* 在相架模式下可以隱藏地點小字，讓畫面更乾淨 */}
+      <div key={rIdx} className={`flex justify-between items-center px-5 py-3 md:py-4 transition-colors ${rowBg}`}>
+        
+        {/* 左側資訊區：強制靠左對齊 (items-start text-left) */}
+        <div className="flex flex-col items-start justify-center text-left">
+          <span className={`text-5xl lg:text-6xl font-black tracking-tight leading-none ${theme.routeNum}`}>
+            {route.route}
+          </span>
+          <span className={`text-sm lg:text-base font-bold mt-1.5 ${theme.routeDest}`}>
+            往 {route.dest}
+          </span>
+          {/* 在相架模式下隱藏車站小字，保持畫面簡潔 */}
           {!isStandMode && (
-             <span className={`text-[10px] mt-0.5 ${theme.routeLoc}`}>{locName} ({locDesc})</span>
+             <span className={`text-[10px] mt-0.5 ${theme.routeLoc}`}>
+               {locName} ({locDesc})
+             </span>
           )}
         </div>
-        <div className="flex flex-col items-end justify-center h-full min-w-[80px]">
+        
+        {/* 右側時間區：靠右對齊 (items-end text-right) */}
+        <div className="flex flex-col items-end justify-center h-full min-w-[80px] text-right">
           {primaryMins === null ? (
-            <span className={`text-2xl font-black ${theme.etaMissed}`}>-</span>
+            <span className={`text-3xl font-black ${theme.etaMissed}`}>-</span>
           ) : isMissed ? (
             <div className="flex flex-col items-end">
-              <span className={`text-2xl lg:text-3xl font-black tracking-wide ${theme.etaMissed}`}>走咗啦</span>
+              <span className={`text-3xl lg:text-4xl font-black tracking-wide ${theme.etaMissed}`}>
+                走咗啦
+              </span>
               {secondaryMins !== null && secondaryMins >= 0 && (
-                <span className={`text-base lg:text-lg font-bold ${theme.etaSecondary}`}>{secondaryMins}</span>
+                <span className={`text-lg lg:text-xl font-bold mt-1 ${theme.etaSecondary}`}>
+                  {secondaryMins}
+                </span>
               )}
             </div>
           ) : (
             <div className="flex flex-col items-end leading-none">
-              <span className={`text-4xl lg:text-5xl font-black ${theme.etaPrimary}`}>
+              <span className={`text-5xl lg:text-6xl font-black ${theme.etaPrimary}`}>
                 {isImminent ? '即將' : primaryMins}
               </span>
-              <div className={`text-base lg:text-lg font-bold mt-1 flex items-center gap-1 ${theme.etaSecondary}`}>
+              <div className={`text-lg lg:text-xl font-bold mt-2 flex items-center gap-1 ${theme.etaSecondary}`}>
                 {secondaryMins !== null && secondaryMins >= 0 ? <span>{secondaryMins}</span> : <span className="opacity-0">-</span>}
               </div>
             </div>
@@ -270,40 +284,36 @@ export default function App() {
                 ${i === photoIndex ? 'opacity-100' : 'opacity-0'}`}
             />
           ))}
-          {/* <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-md text-white/80 px-3 py-1.5 rounded-full text-xs font-bold z-10">
-            <ImageIcon className="w-3.5 h-3.5" /> 峻巒數碼相架
-          </div> */}
         </div>
 
         {/* 右側 40%：斑馬紋交通資訊面板 */}
         <div className={`w-[40%] h-full flex flex-col z-10 transition-colors shadow-2xl ${theme.appBg}`}>
           
-          {/* 右側頂部小標題 (取代原本紅色 pill) */}
-          <div className="px-4 pt-4 pb-2 border-b border-gray-500/20 shrink-0 flex items-center justify-between">
+          {/* 頂部標籤與時鐘 */}
+          <div className="px-5 pt-5 pb-3 border-b border-gray-500/20 shrink-0 flex items-center justify-between">
              <div className="flex items-center gap-2">
                 <Bus className={`w-5 h-5 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
-                <span className={`font-black tracking-wide ${isDarkMode ? 'text-zinc-200' : 'text-gray-800'}`}>
+                <span className={`font-black tracking-wide text-lg ${isDarkMode ? 'text-zinc-200' : 'text-gray-800'}`}>
                   峻巒總站
                 </span>
              </div>
-             <span className={`text-[10px] font-bold ${isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}>
+             <span className={`text-xs font-bold ${isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}>
                 {now.toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
              </span>
           </div>
 
           {/* 表頭： 路線 | 分鐘 */}
-          <div className={`flex justify-between px-5 py-2 text-xs font-bold border-b shrink-0 ${theme.colHeader}`}>
+          <div className={`flex justify-between px-5 py-2 text-sm font-bold border-b shrink-0 ${theme.colHeader}`}>
             <span>路線</span>
             <span>分鐘</span>
           </div>
 
-          {/* 斑馬紋列表 (填滿剩餘高度，可捲動) */}
+          {/* 斑馬紋列表 */}
           <div className="flex-1 overflow-y-auto flex flex-col">
             {parkYohoData?.routesData.map((route, rIdx) => 
                renderRow(route, rIdx, parkYohoData.name, parkYohoData.desc)
             )}
-            
-            {/* 底部補白，讓排版更好看 */}
+            {/* 底部補白 */}
             <div className="flex-1 min-h-[20px]"></div>
           </div>
 
@@ -337,16 +347,22 @@ export default function App() {
         )}
 
         {filteredLocations.map((loc, locIdx) => (
-          <div key={locIdx} className="mb-8">
-            <div className="px-4 pt-5 pb-3">
+          <div key={locIdx} className="mb-8 mt-2">
+            
+            {/* 車站紅色 Pill 標籤 */}
+            <div className="px-5 pt-4 pb-3">
               <span className={`inline-block px-5 py-1.5 rounded-full font-bold text-sm shadow-sm ${theme.pillBg}`}>
                 {loc.name}
               </span>
             </div>
+
+            {/* 表頭 */}
             <div className={`flex justify-between px-5 py-2 text-xs font-bold border-b ${theme.colHeader}`}>
               <span>路線</span>
               <span>分鐘</span>
             </div>
+            
+            {/* 路線行 */}
             <div className="flex flex-col">
               {loc.routesData.map((route, rIdx) => renderRow(route, rIdx, loc.name, loc.desc))}
             </div>
@@ -374,8 +390,8 @@ export default function App() {
           </button>
         </div>
         
-        {/* 統一固定的標題 */}
-        <h1 className="text-lg md:text-xl font-bold tracking-widest text-white text-center flex-1">
+        {/* 全局統一標題 */}
+        <h1 className="text-xl font-bold tracking-widest text-white text-center flex-1">
           峻巒巴士時間
         </h1>
         
