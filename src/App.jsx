@@ -11,7 +11,7 @@ const USER_PHOTOS = [
 ];
 
 // 天氣模式背景
-const WEATHER_BG = "https://www.discoverhongkong.com/content/dam/dhk/data/poi/media/v/victoria-harbour/victoria-harbour-02.jpg";
+const WEATHER_BG = "/victoria-harbour.jpg";
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -255,7 +255,7 @@ export default function App() {
     return (
       <div key={rIdx} className={`flex justify-between items-center px-4 md:px-5 py-3 md:py-4 transition-colors ${rowBg}`}>
         <div className="flex flex-col items-start justify-center text-left min-w-0 pr-2">
-          {/* 加入響應式字體大小，適應 30% 較窄空間 */}
+          {/* 加入響應式字體大小，適應較窄空間 */}
           <span className={`text-4xl lg:text-5xl xl:text-6xl font-black tracking-tight leading-none ${theme.routeNum} truncate w-full`}>
             {route.route}
           </span>
@@ -273,7 +273,6 @@ export default function App() {
             </div>
           ) : (
             <div className="flex flex-col items-end leading-none">
-              {/* 智能字體縮放 */}
               <span className={`${isImminent ? 'text-2xl lg:text-3xl xl:text-4xl tracking-wide' : 'text-4xl lg:text-5xl xl:text-6xl'} font-black transition-colors duration-300 ${dynamicEtaColor}`}>
                 {isImminent ? '即將' : primaryMins}
               </span>
@@ -313,12 +312,10 @@ export default function App() {
                 <h2 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-wide text-white/90 mb-2">
                   {formatChineseDate(now)}
                 </h2>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-[6rem] md:text-[8rem] lg:text-[10rem] xl:text-[12rem] font-black leading-none tracking-tighter drop-shadow-2xl">
-                    {hh}:{mm}
-                  </span>
-                  <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-white/70">
-                    {ss}
+                {/* 統一將時分秒結合，使用完全一致的大小與粗度，並套用 tabular-nums */}
+                <div className="flex items-center tabular-nums">
+                  <span className="text-[5rem] md:text-[7rem] lg:text-[9rem] xl:text-[11rem] font-black leading-none tracking-tighter drop-shadow-2xl">
+                    {hh}:{mm}:{ss}
                   </span>
                 </div>
               </div>
