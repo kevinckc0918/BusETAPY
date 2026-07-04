@@ -5,13 +5,13 @@ import { Bus, RefreshCw, Moon, Sun, MonitorSmartphone, CloudSun, AlertTriangle, 
 // 🖼️ 用家自訂相簿區 (USER PHOTOS)
 // ==========================================
 const USER_PHOTOS = [
-  "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?q=80&w=1920&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1920&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1920&auto=format&fit=crop"
+  "photo01.jpg",
+  "photo02.jpg",
+  "photo03.jpg"
 ];
 
 // 天氣模式背景
-const WEATHER_BG = "/victoria-harbour.jpg";
+const WEATHER_BG = "https://images.unsplash.com/photo-1543387807-68884c7f0b5d?q=80&w=1920&auto=format&fit=crop";
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -255,7 +255,7 @@ export default function App() {
     return (
       <div key={rIdx} className={`flex justify-between items-center px-4 md:px-5 py-3 md:py-4 transition-colors ${rowBg}`}>
         <div className="flex flex-col items-start justify-center text-left min-w-0 pr-2">
-          {/* 加入響應式字體大小，適應較窄空間 */}
+          {/* 加入響應式字體大小，適應 30% 較窄空間 */}
           <span className={`text-4xl lg:text-5xl xl:text-6xl font-black tracking-tight leading-none ${theme.routeNum} truncate w-full`}>
             {route.route}
           </span>
@@ -273,6 +273,7 @@ export default function App() {
             </div>
           ) : (
             <div className="flex flex-col items-end leading-none">
+              {/* 智能字體縮放 */}
               <span className={`${isImminent ? 'text-2xl lg:text-3xl xl:text-4xl tracking-wide' : 'text-4xl lg:text-5xl xl:text-6xl'} font-black transition-colors duration-300 ${dynamicEtaColor}`}>
                 {isImminent ? '即將' : primaryMins}
               </span>
@@ -307,42 +308,42 @@ export default function App() {
               <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${WEATHER_BG})` }} />
               <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/30 to-black/80" />
               
-              {/* 天氣模式 - 時鐘與日期 (上) */}
+              {/* 天氣模式 - 時鐘與日期 (上) - 整體縮細 */}
               <div className="relative z-10 text-white drop-shadow-lg">
-                <h2 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-wide text-white/90 mb-2">
+                <h2 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold tracking-wide text-white/90 mb-2">
                   {formatChineseDate(now)}
                 </h2>
-                {/* 統一將時分秒結合，使用完全一致的大小與粗度，並套用 tabular-nums */}
+                {/* 使用 tabular-nums 並縮小字體 */}
                 <div className="flex items-center tabular-nums">
-                  <span className="text-[5rem] md:text-[7rem] lg:text-[9rem] xl:text-[11rem] font-black leading-none tracking-tighter drop-shadow-2xl">
+                  <span className="text-[4rem] md:text-[5.5rem] lg:text-[7rem] xl:text-[8.5rem] font-black leading-none tracking-tight drop-shadow-2xl">
                     {hh}:{mm}:{ss}
                   </span>
                 </div>
               </div>
 
-              {/* 天氣模式 - 天文台資訊與警告 (下) */}
-              <div className="relative z-10 flex flex-col items-start gap-4 text-white">
-                <div className="flex items-center gap-4">
+              {/* 天氣模式 - 天文台資訊與警告 (下) - 整體縮細 */}
+              <div className="relative z-10 flex flex-col items-start gap-3 text-white">
+                <div className="flex items-center gap-3">
                   {weatherInfo.icon && (
                     <img 
                       src={`https://www.hko.gov.hk/images/HKOWxIconOutline/pic${weatherInfo.icon}.png`} 
                       alt="Weather Icon" 
-                      className="w-20 h-20 md:w-24 md:h-24 lg:w-32 lg:h-32 drop-shadow-xl"
+                      className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 drop-shadow-xl"
                       onError={(e) => e.target.style.display = 'none'}
                     />
                   )}
                   <div className="flex flex-col items-start drop-shadow-xl">
-                    <span className="text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black leading-none tracking-tighter">
-                      {weatherInfo.temp}°<span className="text-4xl md:text-5xl lg:text-6xl">C</span>
+                    <span className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black leading-none tracking-tighter">
+                      {weatherInfo.temp}°<span className="text-3xl md:text-4xl lg:text-5xl">C</span>
                     </span>
-                    <span className="text-sm md:text-base lg:text-lg font-bold text-white/80 tracking-widest mt-1 ml-1">香港天文台</span>
+                    <span className="text-xs md:text-sm lg:text-base font-bold text-white/80 tracking-widest mt-1 ml-1">香港天文台</span>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2 md:gap-3 max-w-full">
                   {weatherInfo.warnings.map((warn, idx) => (
-                    <div key={idx} className={`px-4 py-2 md:px-5 md:py-2.5 rounded-xl font-black text-lg md:text-xl lg:text-2xl shadow-xl flex items-center gap-2 animate-pulse ${getWarningStyle(warn.code)}`}>
-                      <AlertTriangle className="w-5 h-5 shrink-0" />
+                    <div key={idx} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-black text-base md:text-lg lg:text-xl shadow-xl flex items-center gap-2 animate-pulse ${getWarningStyle(warn.code)}`}>
+                      <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
                       {warn.name}
                     </div>
                   ))}
