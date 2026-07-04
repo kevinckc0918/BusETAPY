@@ -11,7 +11,7 @@ const USER_PHOTOS = [
 ];
 
 // 天氣模式背景
-const WEATHER_BG = "https://images.unsplash.com/photo-1543387807-68884c7f0b5d?q=80&w=1920&auto=format&fit=crop";
+const WEATHER_BG = "/victoria-harbour.jpg";
 
 export default function App() {
   const [loading, setLoading] = useState(true);
