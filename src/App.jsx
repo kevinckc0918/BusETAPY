@@ -33,14 +33,12 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem('kmb_stand_mode') || 'false'); } catch { return false; }
   });
 
-  // 左側面板模式: 'PHOTO' 或 'WEATHER'
   const [leftPanelMode, setLeftPanelMode] = useState(() => {
     try { return localStorage.getItem('kmb_left_mode') || 'WEATHER'; } catch { return 'WEATHER'; }
   });
 
   const [now, setNow] = useState(new Date());
 
-  // 儲存設定
   useEffect(() => {
     try { localStorage.setItem('kmb_theme', JSON.stringify(isDarkMode)); } catch (e) {}
   }, [isDarkMode]);
@@ -53,51 +51,59 @@ export default function App() {
     try { localStorage.setItem('kmb_left_mode', leftPanelMode); } catch (e) {}
   }, [leftPanelMode]);
 
-  // 時鐘計時器
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // 相簿輪播計時器
   useEffect(() => {
     if (!isStandMode || leftPanelMode !== 'PHOTO') return;
     const photoTimer = setInterval(() => {
       setPhotoIndex((prev) => (prev + 1) % USER_PHOTOS.length);
-    }, 10000); // 每 10 秒切換一張相片
+    }, 10000);
     return () => clearInterval(photoTimer);
   }, [isStandMode, leftPanelMode]);
 
-  // 獲取香港天文台天氣數據
+  // 🌩️ 獲取香港天文台實時天氣及警告 (已移除特別天氣提示)
   const fetchWeather = useCallback(async () => {
     try {
-      const [rhrRes, warnRes] = await Promise.all([
-        fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc'),
-        fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc')
+      const fetchHkoApi = async (dataType) => {
+        const res = await fetch(`https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=${dataType}&lang=tc`);
+        const text = await res.text();
+        return text ? JSON.parse(text) : null;
+      };
+
+      const [rhrData, warnData] = await Promise.all([
+        fetchHkoApi('rhrread'), // 現時天氣
+        fetchHkoApi('warnsum')  // 警告總結
       ]);
-      const rhrData = await rhrRes.json();
-      const warnData = await warnRes.json();
 
-      // 提取天文台溫度與圖示
-      const hkoTemp = rhrData.temperature?.data?.find(d => d.place === '香港天文台')?.value 
-                      || rhrData.temperature?.data?.[0]?.value || '--';
-      const iconId = rhrData.icon?.[0];
+      // 1. 提取溫度與圖示
+      const hkoTemp = rhrData?.temperature?.data?.find(d => d.place === '香港天文台')?.value 
+                      || rhrData?.temperature?.data?.[0]?.value || '--';
+      const iconId = rhrData?.icon?.[0];
 
-      // 提取並處理警告訊號
-      const activeWarnings = warnData ? Object.values(warnData).map(w => ({
-        code: w.code,
-        name: w.name
-      })) : [];
+      // 2. 提取實時天氣警告
+      const activeWarnings = [];
+      if (warnData && typeof warnData === 'object') {
+        Object.values(warnData).forEach(w => {
+          if (w.code && w.name) activeWarnings.push({ code: w.code, name: w.name });
+        });
+      }
 
-      setWeatherInfo({ temp: hkoTemp, icon: iconId, warnings: activeWarnings });
+      setWeatherInfo({ 
+        temp: hkoTemp, 
+        icon: iconId, 
+        warnings: activeWarnings
+      });
     } catch (err) {
       console.warn('天氣數據載入失敗', err);
     }
   }, []);
 
   useEffect(() => {
-    fetchWeather(); // 初始化獲取
-    const weatherTimer = setInterval(fetchWeather, 300000); // 每 5 分鐘更新天氣
+    fetchWeather();
+    const weatherTimer = setInterval(fetchWeather, 300000); // 每 5 分鐘更新
     return () => clearInterval(weatherTimer);
   }, [fetchWeather]);
 
@@ -210,7 +216,6 @@ export default function App() {
 
   const getEtaMinutes = (etaDate) => Math.floor((etaDate - now) / 60000);
 
-  // 格式化中文日期
   const formatChineseDate = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
@@ -220,24 +225,22 @@ export default function App() {
     return `${year}年${month}月${day}日 ${weekday}`;
   };
 
-  // 天氣警告顏色對照表
   const getWarningStyle = (code) => {
-    const map = {
-      WFIREY: 'bg-yellow-500 text-yellow-950', WFIRER: 'bg-red-500 text-white',
-      WHOT: 'bg-red-600 text-white', WCOLD: 'bg-blue-400 text-blue-950',
-      WMSGNL: 'bg-gray-600 text-white',
-      WRAINA: 'bg-yellow-400 text-yellow-900', WRAINR: 'bg-red-600 text-white', WRAINB: 'bg-black text-white border border-gray-500',
-      WTS: 'bg-yellow-600 text-yellow-950',
-      TC1: 'bg-gray-200 text-gray-800', TC3: 'bg-yellow-500 text-yellow-950',
-      TC8NE: 'bg-zinc-800 text-white', TC8NW: 'bg-zinc-800 text-white', TC8SE: 'bg-zinc-800 text-white', TC8SW: 'bg-zinc-800 text-white',
-      TC9: 'bg-zinc-900 text-white', TC10: 'bg-red-800 text-white'
-    };
-    return map[code] || 'bg-white/20 text-white backdrop-blur-md';
+    switch(code) {
+      case 'WRAINA': return 'bg-yellow-400 text-yellow-950 border border-yellow-500'; 
+      case 'WRAINR': return 'bg-red-600 text-white'; 
+      case 'WRAINB': return 'bg-black text-white border-2 border-gray-400'; 
+      case 'WTS': return 'bg-yellow-600 text-yellow-950'; 
+      case 'WHOT': return 'bg-red-500 text-white'; 
+      case 'WCOLD': return 'bg-blue-400 text-blue-950'; 
+      case 'TC1': case 'TC3': case 'TC8NE': case 'TC8NW': case 'TC8SE': case 'TC8SW': case 'TC9': case 'TC10':
+        return 'bg-zinc-800 text-white'; 
+      case 'WFIREY': return 'bg-yellow-500 text-yellow-950';
+      case 'WFIRER': return 'bg-red-500 text-white';
+      default: return 'bg-white/20 text-white backdrop-blur-md';
+    }
   };
 
-  // ==========================================
-  // 共用組件：單一路線橫向斑馬紋
-  // ==========================================
   const renderRow = (route, rIdx) => {
     const isEven = rIdx % 2 === 0;
     const rowBg = isEven ? theme.rowEven : theme.rowOdd;
@@ -255,7 +258,6 @@ export default function App() {
     return (
       <div key={rIdx} className={`flex justify-between items-center px-4 md:px-5 py-3 md:py-4 transition-colors ${rowBg}`}>
         <div className="flex flex-col items-start justify-center text-left min-w-0 pr-2">
-          {/* 加入響應式字體大小，適應 30% 較窄空間 */}
           <span className={`text-4xl lg:text-5xl xl:text-6xl font-black tracking-tight leading-none ${theme.routeNum} truncate w-full`}>
             {route.route}
           </span>
@@ -273,7 +275,6 @@ export default function App() {
             </div>
           ) : (
             <div className="flex flex-col items-end leading-none">
-              {/* 智能字體縮放 */}
               <span className={`${isImminent ? 'text-2xl lg:text-3xl xl:text-4xl tracking-wide' : 'text-4xl lg:text-5xl xl:text-6xl'} font-black transition-colors duration-300 ${dynamicEtaColor}`}>
                 {isImminent ? '即將' : primaryMins}
               </span>
@@ -287,9 +288,6 @@ export default function App() {
     );
   };
 
-  // ==========================================
-  // 🖼️ 渲染：雙屏座枱模式 (左 70% 內容, 右 30% 巴士)
-  // ==========================================
   const renderStandMode = () => {
     const parkYohoData = locationsData.find(loc => loc.id === "67D38E584B919815");
     const hh = now.getHours().toString().padStart(2, '0');
@@ -302,18 +300,16 @@ export default function App() {
         {/* ================= 左側 70% (自由切換) ================= */}
         <div className="w-[70%] h-full relative overflow-hidden bg-black shadow-[inset_-10px_0_20px_rgba(0,0,0,0.5)] z-0 shrink-0">
           
-          {/* 天氣模式畫面 */}
           {leftPanelMode === 'WEATHER' && (
             <div className="absolute inset-0 flex flex-col justify-between p-8 md:p-12 lg:p-16">
               <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${WEATHER_BG})` }} />
               <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/30 to-black/80" />
               
-              {/* 天氣模式 - 時鐘與日期 (上) - 整體縮細 */}
+              {/* 天氣模式 - 時鐘與日期 */}
               <div className="relative z-10 text-white drop-shadow-lg">
                 <h2 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold tracking-wide text-white/90 mb-2">
                   {formatChineseDate(now)}
                 </h2>
-                {/* 使用 tabular-nums 並縮小字體 */}
                 <div className="flex items-center tabular-nums">
                   <span className="text-[4rem] md:text-[5.5rem] lg:text-[7rem] xl:text-[8.5rem] font-black leading-none tracking-tight drop-shadow-2xl">
                     {hh}:{mm}:{ss}
@@ -321,9 +317,9 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 天氣模式 - 天文台資訊與警告 (下) - 整體縮細 */}
-              <div className="relative z-10 flex flex-col items-start gap-3 text-white">
-                <div className="flex items-center gap-3">
+              {/* 天氣模式 - 天文台資訊、警告 */}
+              <div className="relative z-10 flex flex-col items-start gap-3 text-white max-h-[50%] w-full overflow-hidden">
+                <div className="flex items-center gap-3 shrink-0">
                   {weatherInfo.icon && (
                     <img 
                       src={`https://www.hko.gov.hk/images/HKOWxIconOutline/pic${weatherInfo.icon}.png`} 
@@ -340,19 +336,23 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 md:gap-3 max-w-full">
-                  {weatherInfo.warnings.map((warn, idx) => (
-                    <div key={idx} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-black text-base md:text-lg lg:text-xl shadow-xl flex items-center gap-2 animate-pulse ${getWarningStyle(warn.code)}`}>
-                      <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
-                      {warn.name}
+                <div className="flex flex-col gap-3 max-w-full overflow-y-auto pb-2 pr-2 w-full">
+                  {/* 警告標籤 (如暴雨、颱風) */}
+                  {weatherInfo.warnings.length > 0 && (
+                    <div className="flex flex-wrap gap-2 md:gap-3">
+                      {weatherInfo.warnings.map((warn, idx) => (
+                        <div key={idx} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-black text-sm md:text-base lg:text-lg shadow-xl flex items-center gap-2 animate-pulse ${getWarningStyle(warn.code)}`}>
+                          <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
+                          {warn.name}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
           )}
 
-          {/* 相簿模式畫面 */}
           {leftPanelMode === 'PHOTO' && (
             <>
               {USER_PHOTOS.map((src, i) => (
@@ -388,9 +388,6 @@ export default function App() {
     );
   };
 
-  // ==========================================
-  // 渲染：一般列表模式 (含底部導航)
-  // ==========================================
   const renderListMode = () => {
     const filteredLocations = locationsData.filter(loc => (activeTab === 'ALL' || loc.filterId === activeTab) && loc.routesData.length > 0);
     return (
@@ -418,15 +415,12 @@ export default function App() {
 
   return (
     <div className={`h-screen flex flex-col font-sans transition-colors duration-300 overflow-hidden ${theme.appBg}`}>
-      
-      {/* 頂部 Header */}
       <header className={`px-4 py-3 flex items-center justify-between shadow-sm z-20 shrink-0 transition-colors ${theme.topBar}`}>
         <div className="flex gap-1.5">
           <button className="p-1.5 text-white/80 hover:text-white transition-colors" onClick={() => setIsDarkMode(!isDarkMode)}>
             {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
           
-          {/* 主座枱模式切換 */}
           <button 
             className={`p-1.5 transition-colors rounded-full ${isStandMode ? 'bg-white/20 text-white shadow-inner ring-1 ring-white/50' : 'text-white/80 hover:text-white'}`}
             onClick={() => setIsStandMode(!isStandMode)}
@@ -435,7 +429,6 @@ export default function App() {
             <MonitorSmartphone className="w-5 h-5" />
           </button>
 
-          {/* 左面板 內部切換 (只限座枱模式出現) */}
           {isStandMode && (
             <button 
               className={`ml-1 p-1.5 transition-all rounded-full bg-white/20 text-white border border-white/40 shadow-inner flex items-center gap-1.5 px-3`}
@@ -451,22 +444,21 @@ export default function App() {
           )}
         </div>
         
-        {/* 全局統一標題 */}
         <h1 className="text-xl font-bold tracking-widest text-white text-center flex-1 pr-6 md:pr-0">
           峻巒巴士到站預報
         </h1>
         
-        <button onClick={() => { fetchData(); fetchWeather(); }} className="p-1.5 text-white/80 hover:text-white transition-colors">
-          <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button onClick={() => { fetchData(); fetchWeather(); }} className="p-1.5 text-white/80 hover:text-white transition-colors">
+            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
       </header>
 
-      {/* 主內容區 */}
       <main className={`flex-1 w-full overflow-hidden ${isStandMode ? 'flex' : 'overflow-y-auto'}`}>
         {!isStandMode ? renderListMode() : renderStandMode()}
       </main>
 
-      {/* 底部導航列 (僅在一般模式顯示) */}
       {!isStandMode && (
         <footer className={`fixed bottom-0 left-0 w-full p-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] transition-colors z-20 ${theme.bottomBar}`}>
           <div className="max-w-4xl mx-auto flex gap-2 sm:gap-4 justify-between">
