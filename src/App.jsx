@@ -5,9 +5,9 @@ import { Bus, RefreshCw, Moon, Sun, MonitorSmartphone, CloudSun, AlertTriangle, 
 // 🖼️ 用家自訂相簿區 (USER PHOTOS)
 // ==========================================
 const USER_PHOTOS = [
-  "photo01.jpg",
-  "photo02.jpg",
-  "photo03.jpg"
+  "/photo01.jpg",
+  "/photo02.jpg",
+  "/photo03.jpg"
 ];
 
 // 天氣模式背景
