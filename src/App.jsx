@@ -64,7 +64,7 @@ export default function App() {
     return () => clearInterval(photoTimer);
   }, [isStandMode, leftPanelMode]);
 
-  // 🌩️ 獲取香港天文台實時天氣及警告 (已移除特別天氣提示)
+  // 🌩️ 獲取香港天文台實時天氣及警告
   const fetchWeather = useCallback(async () => {
     try {
       const fetchHkoApi = async (dataType) => {
@@ -74,16 +74,14 @@ export default function App() {
       };
 
       const [rhrData, warnData] = await Promise.all([
-        fetchHkoApi('rhrread'), // 現時天氣
-        fetchHkoApi('warnsum')  // 警告總結
+        fetchHkoApi('rhrread'),
+        fetchHkoApi('warnsum')
       ]);
 
-      // 1. 提取溫度與圖示
       const hkoTemp = rhrData?.temperature?.data?.find(d => d.place === '香港天文台')?.value 
                       || rhrData?.temperature?.data?.[0]?.value || '--';
       const iconId = rhrData?.icon?.[0];
 
-      // 2. 提取實時天氣警告
       const activeWarnings = [];
       if (warnData && typeof warnData === 'object') {
         Object.values(warnData).forEach(w => {
@@ -91,11 +89,7 @@ export default function App() {
         });
       }
 
-      setWeatherInfo({ 
-        temp: hkoTemp, 
-        icon: iconId, 
-        warnings: activeWarnings
-      });
+      setWeatherInfo({ temp: hkoTemp, icon: iconId, warnings: activeWarnings });
     } catch (err) {
       console.warn('天氣數據載入失敗', err);
     }
@@ -103,7 +97,7 @@ export default function App() {
 
   useEffect(() => {
     fetchWeather();
-    const weatherTimer = setInterval(fetchWeather, 300000); // 每 5 分鐘更新
+    const weatherTimer = setInterval(fetchWeather, 300000); 
     return () => clearInterval(weatherTimer);
   }, [fetchWeather]);
 
@@ -127,7 +121,9 @@ export default function App() {
   const LOCATIONS = [
     {
       id: "67D38E584B919815", filterId: "PARKYOHO", name: "峻巒", desc: "往市區",
-      routes: ['68', '68F', '268M'], filterSeq: (eta) => eta.seq <= 5 && !eta.dest_tc.includes('峻巒')
+      routes: ['68', '68F', '268M'], 
+      // 放寬 filterSeq，因為已經有下方嘅智能方向識別，確保唔會篩走任何班次
+      filterSeq: (eta) => eta.seq <= 5 
     },
     {
       id: "0C943B7308FF4DCC", filterId: "YOHO", name: "形點 II", desc: "往峻巒",
@@ -172,29 +168,50 @@ export default function App() {
         const routesList = [];
         loc.routes.forEach(routeNum => {
           const validEtas = allEtas.filter(eta => eta.route === routeNum && eta.eta && loc.filterSeq(eta));
+          
           if (validEtas.length > 0) {
-            const dests = [...new Set(validEtas.map(e => e.dest_tc))];
+            // 💡 智能方向識別系統 (Smart Destination Override)
+            // 針對循環線 KMB API 目的地名稱不清晰/不轉換的問題進行修正
+            validEtas.forEach(eta => {
+              if (loc.filterId === 'PARKYOHO') {
+                if (routeNum === '68') eta.smart_dest = '形點';
+                else if (routeNum === '68F') eta.smart_dest = '元朗公園';
+                else if (routeNum === '268M') eta.smart_dest = '荃灣西站';
+                else eta.smart_dest = eta.dest_tc;
+              } else if (loc.filterId === 'YOHO' || loc.filterId === 'TUNNEL') {
+                eta.smart_dest = '峻巒'; // 中途站返峻巒統一顯示為峻巒
+              } else {
+                eta.smart_dest = eta.dest_tc.includes('荃灣西') ? '荃灣西站' : eta.dest_tc;
+              }
+            });
+
+            // 根據智能目的地黎 Group 埋同一路線
+            const dests = [...new Set(validEtas.map(e => e.smart_dest))];
             dests.forEach(dest => {
-              const destEtas = validEtas.filter(e => e.dest_tc === dest);
+              const destEtas = validEtas.filter(e => e.smart_dest === dest);
               destEtas.sort((a, b) => new Date(a.eta) - new Date(b.eta));
-              let displayDest = dest;
-              if (displayDest.includes('荃灣西')) displayDest = '荃灣西站'; 
               routesList.push({
-                route: routeNum, dest: displayDest,
+                route: routeNum, dest: dest,
                 etas: destEtas.slice(0, 2).map(e => ({ time: new Date(e.eta), rmk: e.rmk_tc !== "原定班次" ? e.rmk_tc : null }))
               });
             });
           }
         });
 
+        // 確保相架模式下 68, 68F, 268M 齊全，以維持排版
         if (loc.name.includes("峻巒") && isStandMode) {
             const requiredRoutes = ['68', '68F', '268M'];
             requiredRoutes.forEach(r => {
                 if (!routesList.find(item => item.route === r)) {
-                    routesList.push({ route: r, dest: r === '268M' ? "荃灣西站" : "峻巒", etas: [] });
+                    let defaultDest = "市區";
+                    if (r === '68') defaultDest = "形點";
+                    if (r === '68F') defaultDest = "元朗公園";
+                    if (r === '268M') defaultDest = "荃灣西站";
+                    routesList.push({ route: r, dest: defaultDest, etas: [] });
                 }
             });
         }
+        
         routesList.sort((a, b) => a.route.localeCompare(b.route, undefined, { numeric: true }));
         return { ...loc, routesData: routesList };
       });
@@ -297,7 +314,7 @@ export default function App() {
     return (
       <div className="flex flex-row w-full h-full overflow-hidden relative bg-black">
         
-        {/* ================= 左側 70% (自由切換) ================= */}
+        {/* ================= 左側 70% ================= */}
         <div className="w-[70%] h-full relative overflow-hidden bg-black shadow-[inset_-10px_0_20px_rgba(0,0,0,0.5)] z-0 shrink-0">
           
           {leftPanelMode === 'WEATHER' && (
@@ -305,7 +322,6 @@ export default function App() {
               <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${WEATHER_BG})` }} />
               <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/30 to-black/80" />
               
-              {/* 天氣模式 - 時鐘與日期 */}
               <div className="relative z-10 text-white drop-shadow-lg">
                 <h2 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold tracking-wide text-white/90 mb-2">
                   {formatChineseDate(now)}
@@ -317,7 +333,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 天氣模式 - 天文台資訊、警告 */}
               <div className="relative z-10 flex flex-col items-start gap-3 text-white max-h-[50%] w-full overflow-hidden">
                 <div className="flex items-center gap-3 shrink-0">
                   {weatherInfo.icon && (
@@ -337,7 +352,6 @@ export default function App() {
                 </div>
 
                 <div className="flex flex-col gap-3 max-w-full overflow-y-auto pb-2 pr-2 w-full">
-                  {/* 警告標籤 (如暴雨、颱風) */}
                   {weatherInfo.warnings.length > 0 && (
                     <div className="flex flex-wrap gap-2 md:gap-3">
                       {weatherInfo.warnings.map((warn, idx) => (
@@ -363,7 +377,7 @@ export default function App() {
 
         </div>
 
-        {/* ================= 右側 30% (永久巴士資訊) ================= */}
+        {/* ================= 右側 30% ================= */}
         <div className={`w-[30%] h-full flex flex-col z-10 transition-colors shadow-2xl ${theme.appBg}`}>
           <div className="px-4 pt-5 pb-3 border-b border-gray-500/20 shrink-0 flex items-center justify-between">
              <div className="flex items-center gap-2">
