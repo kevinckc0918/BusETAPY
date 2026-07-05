@@ -122,7 +122,6 @@ export default function App() {
     {
       id: "67D38E584B919815", filterId: "PARKYOHO", name: "峻巒", desc: "往市區",
       routes: ['68', '68F', '268M'], 
-      // 放寬 filterSeq，因為已經有下方嘅智能方向識別，確保唔會篩走任何班次
       filterSeq: (eta) => eta.seq <= 5 
     },
     {
@@ -170,8 +169,7 @@ export default function App() {
           const validEtas = allEtas.filter(eta => eta.route === routeNum && eta.eta && loc.filterSeq(eta));
           
           if (validEtas.length > 0) {
-            // 💡 智能方向識別系統 (Smart Destination Override)
-            // 針對循環線 KMB API 目的地名稱不清晰/不轉換的問題進行修正
+            // 💡 智能方向識別系統
             validEtas.forEach(eta => {
               if (loc.filterId === 'PARKYOHO') {
                 if (routeNum === '68') eta.smart_dest = '形點';
@@ -179,13 +177,12 @@ export default function App() {
                 else if (routeNum === '268M') eta.smart_dest = '荃灣西站';
                 else eta.smart_dest = eta.dest_tc;
               } else if (loc.filterId === 'YOHO' || loc.filterId === 'TUNNEL') {
-                eta.smart_dest = '峻巒'; // 中途站返峻巒統一顯示為峻巒
+                eta.smart_dest = '峻巒'; 
               } else {
                 eta.smart_dest = eta.dest_tc.includes('荃灣西') ? '荃灣西站' : eta.dest_tc;
               }
             });
 
-            // 根據智能目的地黎 Group 埋同一路線
             const dests = [...new Set(validEtas.map(e => e.smart_dest))];
             dests.forEach(dest => {
               const destEtas = validEtas.filter(e => e.smart_dest === dest);
@@ -198,7 +195,6 @@ export default function App() {
           }
         });
 
-        // 確保相架模式下 68, 68F, 268M 齊全，以維持排版
         if (loc.name.includes("峻巒") && isStandMode) {
             const requiredRoutes = ['68', '68F', '268M'];
             requiredRoutes.forEach(r => {
@@ -278,7 +274,8 @@ export default function App() {
           <span className={`text-4xl lg:text-5xl xl:text-6xl font-black tracking-tight leading-none ${theme.routeNum} truncate w-full`}>
             {route.route}
           </span>
-          <span className={`text-xs lg:text-sm xl:text-base font-bold mt-1.5 ${theme.routeDest} truncate w-full`}>
+          {/* ✅ 已加大目的地字體 (text-base md:text-lg xl:text-xl) */}
+          <span className={`text-base md:text-lg xl:text-xl font-bold mt-1.5 ${theme.routeDest} truncate w-full`}>
             往 {route.dest}
           </span>
         </div>
