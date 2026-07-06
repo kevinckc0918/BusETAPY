@@ -274,7 +274,6 @@ export default function App() {
           <span className={`text-4xl lg:text-5xl xl:text-6xl font-black tracking-tight leading-none ${theme.routeNum} truncate w-full`}>
             {route.route}
           </span>
-          {/* ✅ 已加大目的地字體 (text-base md:text-lg xl:text-xl) */}
           <span className={`text-base md:text-lg xl:text-xl font-bold mt-1.5 ${theme.routeDest} truncate w-full`}>
             往 {route.dest}
           </span>
@@ -379,15 +378,19 @@ export default function App() {
           <div className="px-4 pt-5 pb-3 border-b border-gray-500/20 shrink-0 flex items-center justify-between">
              <div className="flex items-center gap-2">
                 <Bus className={`w-4 h-4 md:w-5 md:h-5 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
-                <span className={`font-black tracking-wide text-base md:text-lg ${isDarkMode ? 'text-zinc-200' : 'text-gray-800'}`}>峻巒總站</span>
+                <span className={`font-black tracking-wide text-base md:text-lg ${isDarkMode ? 'text-zinc-200' : 'text-gray-800'}`}>實時班次</span>
              </div>
              <span className={`text-[10px] md:text-xs font-bold ${isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}>
                 更新: {now.toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
              </span>
           </div>
-          <div className={`flex justify-between px-4 py-2 text-sm md:text-base font-bold border-b shrink-0 ${theme.colHeader}`}>
-            <span>路線</span>
-            <span>分鐘</span>
+          {/* 💡 將紅色的車站名稱 Pill 放入表頭的一行 */}
+          <div className={`flex items-center justify-between px-4 py-2.5 border-b shrink-0 ${theme.colHeader}`}>
+            <span className="text-sm md:text-base font-bold">路線</span>
+            <span className={`px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-sm ${theme.pillBg}`}>
+              峻巒總站
+            </span>
+            <span className="text-sm md:text-base font-bold">分鐘</span>
           </div>
           <div className="flex-1 overflow-y-auto flex flex-col">
             {parkYohoData?.routesData.map((route, rIdx) => renderRow(route, rIdx))}
@@ -408,12 +411,14 @@ export default function App() {
           <div className="text-center py-20"><Bus className="w-12 h-12 text-gray-300 mx-auto mb-3" /><p className="text-gray-400 font-bold">目前無相應班次</p></div>
         )}
         {filteredLocations.map((loc, locIdx) => (
-          <div key={locIdx} className="mb-8 mt-2">
-            <div className="px-5 pt-4 pb-3">
-              <span className={`inline-block px-5 py-1.5 rounded-full font-bold text-base shadow-sm ${theme.pillBg}`}>{loc.name}</span>
-            </div>
-            <div className={`flex justify-between px-5 py-2 text-base font-bold border-b ${theme.colHeader}`}>
-              <span>路線</span><span>分鐘</span>
+          <div key={locIdx} className="mb-8 mt-4">
+            {/* 💡 將紅色的車站名稱 Pill 放入表頭的一行 */}
+            <div className={`flex items-center justify-between px-5 py-3 border-b ${theme.colHeader}`}>
+              <span className="text-base font-bold">路線</span>
+              <span className={`px-4 py-1 rounded-full text-sm font-bold shadow-sm ${theme.pillBg}`}>
+                {loc.name}
+              </span>
+              <span className="text-base font-bold">分鐘</span>
             </div>
             <div className="flex flex-col">
               {loc.routesData.map((route, rIdx) => renderRow(route, rIdx))}
