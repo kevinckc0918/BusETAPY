@@ -85,7 +85,15 @@ export default function App() {
       const activeWarnings = [];
       if (warnData && typeof warnData === 'object') {
         Object.values(warnData).forEach(w => {
-          if (w.code && w.name) activeWarnings.push({ code: w.code, name: w.name });
+          if (w.code && w.name) {
+            let warnName = w.name;
+            // 💡 確保暴雨警告字眼符合天文台標準寫法
+            if (w.code === 'WRAINA') warnName = '黃色暴雨警告信號';
+            if (w.code === 'WRAINR') warnName = '紅色暴雨警告信號';
+            if (w.code === 'WRAINB') warnName = '黑色暴雨警告信號';
+            
+            activeWarnings.push({ code: w.code, name: warnName });
+          }
         });
       }
 
@@ -102,7 +110,7 @@ export default function App() {
   }, [fetchWeather]);
 
   const theme = {
-    appBg: isDarkMode ? 'bg-zinc-950' : 'bg-white',
+    appBg: isDarkMode ? 'bg-zinc-950' : 'bg-gray-50',
     topBar: isDarkMode ? 'bg-red-950' : 'bg-[#e3342f]',
     bottomBar: isDarkMode ? 'bg-red-950' : 'bg-[#e3342f]',
     pillBg: isDarkMode ? 'bg-red-900 text-white' : 'bg-[#e3342f] text-white',
@@ -375,16 +383,28 @@ export default function App() {
 
         {/* ================= 右側 30% ================= */}
         <div className={`w-[30%] h-full flex flex-col z-10 transition-colors shadow-2xl ${theme.appBg}`}>
-          <div className="px-4 pt-5 pb-3 border-b border-gray-500/20 shrink-0 flex items-center justify-between">
-             <div className="flex items-center gap-2">
-                <Bus className={`w-4 h-4 md:w-5 md:h-5 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
-                <span className={`font-black tracking-wide text-base md:text-lg ${isDarkMode ? 'text-zinc-200' : 'text-gray-800'}`}>實時班次</span>
+          <div className="px-4 pt-5 pb-3 border-b border-gray-500/20 shrink-0 flex flex-col gap-2 justify-center">
+             <div className="flex items-center justify-between">
+               <div className="flex items-center gap-2">
+                  <Bus className={`w-5 h-5 md:w-6 md:h-6 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
+                  <span className={`font-black tracking-wide text-lg md:text-xl ${isDarkMode ? 'text-zinc-200' : 'text-gray-800'}`}>實時班次</span>
+               </div>
+               <span className={`text-[10px] md:text-xs font-bold ${isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}>
+                  {now.toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+               </span>
              </div>
-             <span className={`text-[10px] md:text-xs font-bold ${isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}>
-                更新: {now.toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
-             </span>
+             
+             {weatherInfo.warnings.length > 0 && (
+               <div className="flex flex-col gap-1 mt-1">
+                 {weatherInfo.warnings.map((warn, idx) => (
+                   <div key={idx} className={`px-2 py-1 rounded font-bold text-xs shadow-sm flex items-center gap-1 ${getWarningStyle(warn.code)}`}>
+                     <AlertTriangle className="w-3 h-3 shrink-0" />
+                     <span className="truncate">{warn.name}</span>
+                   </div>
+                 ))}
+               </div>
+             )}
           </div>
-          {/* 💡 將紅色的車站名稱 Pill 放入表頭的一行 */}
           <div className={`flex items-center justify-between px-4 py-2.5 border-b shrink-0 ${theme.colHeader}`}>
             <span className="text-sm md:text-base font-bold">路線</span>
             <span className={`px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-sm ${theme.pillBg}`}>
@@ -392,7 +412,7 @@ export default function App() {
             </span>
             <span className="text-sm md:text-base font-bold">分鐘</span>
           </div>
-          <div className="flex-1 overflow-y-auto flex flex-col">
+          <div className="flex-1 overflow-y-auto flex flex-col bg-white dark:bg-zinc-950">
             {parkYohoData?.routesData.map((route, rIdx) => renderRow(route, rIdx))}
             <div className="flex-1 min-h-[20px]"></div>
           </div>
@@ -406,19 +426,34 @@ export default function App() {
     const filteredLocations = locationsData.filter(loc => (activeTab === 'ALL' || loc.filterId === activeTab) && loc.routesData.length > 0);
     return (
       <div className="w-full max-w-4xl mx-auto pb-24">
+        
+        {weatherInfo.warnings.length > 0 && (
+          <div className="px-4 md:px-6 pt-5 pb-1">
+            <div className="flex flex-col gap-2">
+              {weatherInfo.warnings.map((warn, idx) => (
+                <div key={idx} className={`px-4 py-3 md:py-4 rounded-xl font-black text-sm md:text-lg shadow-md flex items-center gap-3 animate-pulse ${getWarningStyle(warn.code)}`}>
+                  <AlertTriangle className="w-6 h-6 shrink-0" />
+                  {warn.name}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {error && <div className="bg-red-50 text-red-600 p-3 text-center text-sm font-bold m-4 rounded-lg">{error}</div>}
+        
         {!loading && filteredLocations.length === 0 && (
           <div className="text-center py-20"><Bus className="w-12 h-12 text-gray-300 mx-auto mb-3" /><p className="text-gray-400 font-bold">目前無相應班次</p></div>
         )}
+        
         {filteredLocations.map((loc, locIdx) => (
-          <div key={locIdx} className="mb-8 mt-4">
-            {/* 💡 將紅色的車站名稱 Pill 放入表頭的一行 */}
-            <div className={`flex items-center justify-between px-5 py-3 border-b ${theme.colHeader}`}>
-              <span className="text-base font-bold">路線</span>
-              <span className={`px-4 py-1 rounded-full text-sm font-bold shadow-sm ${theme.pillBg}`}>
+          <div key={locIdx} className="mb-6 mt-4 mx-4 md:mx-6 rounded-2xl overflow-hidden shadow-lg border border-gray-100 dark:border-zinc-800">
+            <div className={`flex items-center justify-between px-5 py-3 md:py-4 border-b ${theme.colHeader} ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`}>
+              <span className="text-base md:text-lg font-bold">路線</span>
+              <span className={`px-4 py-1.5 rounded-full text-sm md:text-base font-bold shadow-sm ${theme.pillBg}`}>
                 {loc.name}
               </span>
-              <span className="text-base font-bold">分鐘</span>
+              <span className="text-base md:text-lg font-bold">分鐘</span>
             </div>
             <div className="flex flex-col">
               {loc.routesData.map((route, rIdx) => renderRow(route, rIdx))}
@@ -431,42 +466,42 @@ export default function App() {
 
   return (
     <div className={`h-screen flex flex-col font-sans transition-colors duration-300 overflow-hidden ${theme.appBg}`}>
-      <header className={`px-4 py-3 flex items-center justify-between shadow-sm z-20 shrink-0 transition-colors ${theme.topBar}`}>
-        <div className="flex gap-1.5">
-          <button className="p-1.5 text-white/80 hover:text-white transition-colors" onClick={() => setIsDarkMode(!isDarkMode)}>
-            {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+      <header className={`px-4 py-3 md:py-4 flex items-center justify-between shadow-md z-20 shrink-0 transition-colors ${theme.topBar}`}>
+        <div className="flex items-center gap-2 md:gap-3">
+          <button className="p-2 text-white/80 hover:text-white transition-colors" onClick={() => setIsDarkMode(!isDarkMode)}>
+            {isDarkMode ? <Sun className="w-6 h-6 md:w-7 md:h-7" /> : <Moon className="w-6 h-6 md:w-7 md:h-7" />}
           </button>
           
           <button 
-            className={`p-1.5 transition-colors rounded-full ${isStandMode ? 'bg-white/20 text-white shadow-inner ring-1 ring-white/50' : 'text-white/80 hover:text-white'}`}
+            className={`p-2 transition-colors rounded-full ${isStandMode ? 'bg-white/20 text-white shadow-inner ring-1 ring-white/50' : 'text-white/80 hover:text-white'}`}
             onClick={() => setIsStandMode(!isStandMode)}
             title="橫向座枱模式"
           >
-            <MonitorSmartphone className="w-5 h-5" />
+            <MonitorSmartphone className="w-6 h-6 md:w-7 md:h-7" />
           </button>
 
           {isStandMode && (
             <button 
-              className={`ml-1 p-1.5 transition-all rounded-full bg-white/20 text-white border border-white/40 shadow-inner flex items-center gap-1.5 px-3`}
+              className={`ml-1 p-2 transition-all rounded-full bg-white/20 text-white border border-white/40 shadow-inner flex items-center gap-2 px-3 md:px-4`}
               onClick={() => setLeftPanelMode(leftPanelMode === 'WEATHER' ? 'PHOTO' : 'WEATHER')}
               title="切換相片/天氣"
             >
               {leftPanelMode === 'WEATHER' ? (
-                <><ImageIcon className="w-4 h-4" /><span className="text-xs font-bold hidden sm:inline">轉相簿</span></>
+                <><ImageIcon className="w-5 h-5 md:w-6 md:h-6" /><span className="text-sm font-bold hidden sm:inline">轉相簿</span></>
               ) : (
-                <><CloudSun className="w-4 h-4" /><span className="text-xs font-bold hidden sm:inline">轉天氣</span></>
+                <><CloudSun className="w-5 h-5 md:w-6 md:h-6" /><span className="text-sm font-bold hidden sm:inline">轉天氣</span></>
               )}
             </button>
           )}
         </div>
         
-        <h1 className="text-xl font-bold tracking-widest text-white text-center flex-1 pr-6 md:pr-0">
+        <h1 className="text-lg md:text-2xl font-bold tracking-widest text-white text-center flex-1 pr-6 md:pr-0">
           峻巒巴士到站預報
         </h1>
         
         <div className="flex items-center gap-1">
-          <button onClick={() => { fetchData(); fetchWeather(); }} className="p-1.5 text-white/80 hover:text-white transition-colors">
-            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+          <button onClick={() => { fetchData(); fetchWeather(); }} className="p-2 text-white/80 hover:text-white transition-colors">
+            <RefreshCw className={`w-6 h-6 md:w-7 md:h-7 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </header>
@@ -478,10 +513,10 @@ export default function App() {
       {!isStandMode && (
         <footer className={`fixed bottom-0 left-0 w-full p-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] transition-colors z-20 ${theme.bottomBar}`}>
           <div className="max-w-4xl mx-auto flex gap-2 sm:gap-4 justify-between">
-            <button onClick={() => setActiveTab('ALL')} className={`flex-1 py-2.5 rounded-lg text-sm font-bold text-center transition-all duration-200 ${activeTab === 'ALL' ? theme.tabActive : theme.tabInactive}`}>全部</button>
-            <button onClick={() => setActiveTab('PARKYOHO')} className={`flex-1 py-2.5 rounded-lg text-sm font-bold text-center transition-all duration-200 ${activeTab === 'PARKYOHO' ? theme.tabActive : theme.tabInactive}`}>峻巒</button>
-            <button onClick={() => setActiveTab('YOHO')} className={`flex-1 py-2.5 rounded-lg text-sm font-bold text-center transition-all duration-200 ${activeTab === 'YOHO' ? theme.tabActive : theme.tabInactive}`}>形點</button>
-            <button onClick={() => setActiveTab('TUNNEL')} className={`flex-1 py-2.5 rounded-lg text-sm font-bold text-center transition-all duration-200 ${activeTab === 'TUNNEL' ? theme.tabActive : theme.tabInactive}`}>大欖</button>
+            <button onClick={() => setActiveTab('ALL')} className={`flex-1 py-3 rounded-lg text-sm md:text-base font-bold text-center transition-all duration-200 ${activeTab === 'ALL' ? theme.tabActive : theme.tabInactive}`}>全部</button>
+            <button onClick={() => setActiveTab('PARKYOHO')} className={`flex-1 py-3 rounded-lg text-sm md:text-base font-bold text-center transition-all duration-200 ${activeTab === 'PARKYOHO' ? theme.tabActive : theme.tabInactive}`}>峻巒</button>
+            <button onClick={() => setActiveTab('YOHO')} className={`flex-1 py-3 rounded-lg text-sm md:text-base font-bold text-center transition-all duration-200 ${activeTab === 'YOHO' ? theme.tabActive : theme.tabInactive}`}>形點</button>
+            <button onClick={() => setActiveTab('TUNNEL')} className={`flex-1 py-3 rounded-lg text-sm md:text-base font-bold text-center transition-all duration-200 ${activeTab === 'TUNNEL' ? theme.tabActive : theme.tabInactive}`}>大欖</button>
           </div>
         </footer>
       )}
