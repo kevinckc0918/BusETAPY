@@ -246,19 +246,24 @@ export default function App() {
     return `${year}年${month}月${day}日 ${weekday}`;
   };
 
+  // 💡 已全面補齊天文台所有常見警告，並設定穩妥的 Default 顏色
   const getWarningStyle = (code) => {
     switch(code) {
-      case 'WRAINA': return 'bg-yellow-400 text-yellow-950 border border-yellow-500'; 
-      case 'WRAINR': return 'bg-red-600 text-white'; 
-      case 'WRAINB': return 'bg-black text-white border-2 border-gray-400'; 
-      case 'WTS': return 'bg-yellow-600 text-yellow-950'; 
-      case 'WHOT': return 'bg-red-500 text-white'; 
-      case 'WCOLD': return 'bg-blue-400 text-blue-950'; 
+      case 'WRAINA': return 'bg-yellow-400 text-yellow-950 border border-yellow-500'; // 黃雨
+      case 'WRAINR': return 'bg-red-600 text-white'; // 紅雨
+      case 'WRAINB': return 'bg-black text-white border-2 border-gray-400'; // 黑雨
+      case 'WTS': return 'bg-yellow-600 text-yellow-950'; // 雷暴
+      case 'WHOT': return 'bg-red-500 text-white'; // 酷熱
+      case 'WCOLD': return 'bg-blue-400 text-blue-950'; // 寒冷
       case 'TC1': case 'TC3': case 'TC8NE': case 'TC8NW': case 'TC8SE': case 'TC8SW': case 'TC9': case 'TC10':
-        return 'bg-zinc-800 text-white'; 
-      case 'WFIREY': return 'bg-yellow-500 text-yellow-950';
-      case 'WFIRER': return 'bg-red-500 text-white';
-      default: return 'bg-white/20 text-white backdrop-blur-md';
+        return 'bg-zinc-800 text-white'; // 颱風
+      case 'WFIREY': return 'bg-yellow-500 text-yellow-950'; // 黃色火災
+      case 'WFIRER': return 'bg-red-500 text-white'; // 紅色火災
+      case 'WMSGNL': return 'bg-gray-600 text-white'; // 強烈季候風
+      case 'WLSL': return 'bg-yellow-800 text-white'; // 山泥傾瀉
+      case 'WTMW': return 'bg-blue-600 text-white'; // 海嘯
+      case 'WFNV': return 'bg-teal-600 text-white'; // 新界北部水浸
+      default: return 'bg-gray-700 text-white shadow-md'; // ⚠️ 終極後備：深灰底白字，保證可見
     }
   };
 
