@@ -87,11 +87,9 @@ export default function App() {
         Object.values(warnData).forEach(w => {
           if (w.code && w.name) {
             let warnName = w.name;
-            // 💡 確保暴雨警告字眼符合天文台標準寫法
             if (w.code === 'WRAINA') warnName = '黃色暴雨警告信號';
             if (w.code === 'WRAINR') warnName = '紅色暴雨警告信號';
             if (w.code === 'WRAINB') warnName = '黑色暴雨警告信號';
-            
             activeWarnings.push({ code: w.code, name: warnName });
           }
         });
@@ -126,11 +124,17 @@ export default function App() {
     tabInactive: isDarkMode ? 'border border-white/50 text-white' : 'border border-white/50 text-white hover:bg-white/10'
   };
 
+  // 💡 修正路線篩選邏輯，精確排除相反方向班次
   const LOCATIONS = [
     {
       id: "67D38E584B919815", filterId: "PARKYOHO", name: "峻巒", desc: "往市區",
       routes: ['68', '68F', '268M'], 
-      filterSeq: (eta) => eta.seq <= 5 
+      filterSeq: (eta) => {
+        // 268M: 喺峻巒總站絕對唔可以顯示「往峻巒」嘅回程車
+        if (eta.route === '268M') return !eta.dest_tc.includes('峻巒');
+        // 68, 68F (循環線): 取初段班次
+        return eta.seq <= 5;
+      }
     },
     {
       id: "0C943B7308FF4DCC", filterId: "YOHO", name: "形點 II", desc: "往峻巒",
@@ -142,7 +146,9 @@ export default function App() {
     },
     {
       id: "E481F7170B1F6FC3", filterId: "TUNNEL", name: "大欖隧道", desc: "往峻巒",
-      routes: ['268M'], filterSeq: (eta) => true
+      routes: ['268M'], 
+      // 268M: 喺大欖隧道只可以顯示「往峻巒」方向，過濾往市區嘅車
+      filterSeq: (eta) => eta.dest_tc.includes('峻巒') 
     }
   ];
 
@@ -177,7 +183,6 @@ export default function App() {
           const validEtas = allEtas.filter(eta => eta.route === routeNum && eta.eta && loc.filterSeq(eta));
           
           if (validEtas.length > 0) {
-            // 💡 智能方向識別系統
             validEtas.forEach(eta => {
               if (loc.filterId === 'PARKYOHO') {
                 if (routeNum === '68') eta.smart_dest = '形點';
@@ -193,8 +198,12 @@ export default function App() {
 
             const dests = [...new Set(validEtas.map(e => e.smart_dest))];
             dests.forEach(dest => {
-              const destEtas = validEtas.filter(e => e.smart_dest === dest);
+              let destEtas = validEtas.filter(e => e.smart_dest === dest);
+              
+              // 💡 防重疊機制：過濾 API 傳回時間完全一樣的重複班次
+              destEtas = destEtas.filter((v, i, a) => a.findIndex(t => (t.eta === v.eta)) === i);
               destEtas.sort((a, b) => new Date(a.eta) - new Date(b.eta));
+              
               routesList.push({
                 route: routeNum, dest: dest,
                 etas: destEtas.slice(0, 2).map(e => ({ time: new Date(e.eta), rmk: e.rmk_tc !== "原定班次" ? e.rmk_tc : null }))
@@ -246,24 +255,23 @@ export default function App() {
     return `${year}年${month}月${day}日 ${weekday}`;
   };
 
-  // 💡 已全面補齊天文台所有常見警告，並設定穩妥的 Default 顏色
   const getWarningStyle = (code) => {
     switch(code) {
-      case 'WRAINA': return 'bg-yellow-400 text-yellow-950 border border-yellow-500'; // 黃雨
-      case 'WRAINR': return 'bg-red-600 text-white'; // 紅雨
-      case 'WRAINB': return 'bg-black text-white border-2 border-gray-400'; // 黑雨
-      case 'WTS': return 'bg-yellow-600 text-yellow-950'; // 雷暴
-      case 'WHOT': return 'bg-red-500 text-white'; // 酷熱
-      case 'WCOLD': return 'bg-blue-400 text-blue-950'; // 寒冷
+      case 'WRAINA': return 'bg-yellow-400 text-yellow-950 border border-yellow-500'; 
+      case 'WRAINR': return 'bg-red-600 text-white'; 
+      case 'WRAINB': return 'bg-black text-white border-2 border-gray-400'; 
+      case 'WTS': return 'bg-yellow-600 text-yellow-950'; 
+      case 'WHOT': return 'bg-red-500 text-white'; 
+      case 'WCOLD': return 'bg-blue-400 text-blue-950'; 
       case 'TC1': case 'TC3': case 'TC8NE': case 'TC8NW': case 'TC8SE': case 'TC8SW': case 'TC9': case 'TC10':
-        return 'bg-zinc-800 text-white'; // 颱風
-      case 'WFIREY': return 'bg-yellow-500 text-yellow-950'; // 黃色火災
-      case 'WFIRER': return 'bg-red-500 text-white'; // 紅色火災
-      case 'WMSGNL': return 'bg-gray-600 text-white'; // 強烈季候風
-      case 'WLSL': return 'bg-yellow-800 text-white'; // 山泥傾瀉
-      case 'WTMW': return 'bg-blue-600 text-white'; // 海嘯
-      case 'WFNV': return 'bg-teal-600 text-white'; // 新界北部水浸
-      default: return 'bg-gray-700 text-white shadow-md'; // ⚠️ 終極後備：深灰底白字，保證可見
+        return 'bg-zinc-800 text-white'; 
+      case 'WFIREY': return 'bg-yellow-500 text-yellow-950';
+      case 'WFIRER': return 'bg-red-500 text-white';
+      case 'WMSGNL': return 'bg-gray-600 text-white';
+      case 'WLSL': return 'bg-yellow-800 text-white';
+      case 'WTMW': return 'bg-blue-600 text-white';
+      case 'WFNV': return 'bg-teal-600 text-white';
+      default: return 'bg-gray-700 text-white shadow-md';
     }
   };
 
